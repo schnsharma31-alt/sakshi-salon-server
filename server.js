@@ -16,7 +16,6 @@ if (!fs.existsSync(billsDir)) {
     fs.mkdirSync(billsDir, { recursive: true });
 }
 
-// In-memory bookings store with status: 'PENDING'
 let onlineBookings = [];
 
 const storage = multer.diskStorage({
@@ -42,7 +41,7 @@ app.post('/upload', upload.single('billPdf'), (req, res) => {
     res.json({ success: true, url: fullUrl, filename: req.file.filename });
 });
 
-// Online Booking Page for Customers
+// Online Booking Page for Customers (English Version)
 app.get('/book', (req, res) => {
     res.send(`
     <!DOCTYPE html>
@@ -53,33 +52,39 @@ app.get('/book', (req, res) => {
         <title>Online Appointment Request | Sakshi Makeover & Unisex Salon</title>
         <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0F111A; color: #fff; margin: 0; padding: 20px; }
-            .container { max-width: 480px; margin: 0 auto; background: #181B26; border-radius: 20px; padding: 25px; border: 1px solid rgba(93, 83, 162, 0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-            h2 { color: #fff; text-align: center; margin-bottom: 5px; font-size: 20px; }
+            .container { max-width: 480px; margin: 30px auto; background: #181B26; border-radius: 20px; padding: 28px; border: 1px solid rgba(93, 83, 162, 0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+            h2 { color: #fff; text-align: center; margin-bottom: 5px; font-size: 21px; }
             p.sub { text-align: center; color: #8F94A6; font-size: 12px; margin-top: 0; margin-bottom: 25px; }
             label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #A4A9C0; }
             input, select { width: 100%; padding: 12px; background: #0F111A; border: 1px solid #2B3045; border-radius: 10px; color: #fff; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; }
             input:focus, select:focus { outline: none; border-color: #5D53A2; }
-            button { width: 100%; padding: 14px; background: #5D53A2; border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+            button { width: 100%; padding: 14px; background: #5D53A2; border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; }
             button:hover { background: #4D4488; }
-            .pending-alert { display: none; background: #2A210D; border: 1px solid #C69500; color: #FFD24D; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
+            .pending-alert { display: none; background: #1B2133; border: 1.5px solid #5D53A2; color: #E0E2EC; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px; font-size: 13.5px; line-height: 1.6; }
+            .pending-alert strong { color: #8C82E6; font-size: 17px; display: block; margin-bottom: 8px; }
         </style>
     </head>
     <body>
         <div class="container">
             <h2>Sakshi Makeover & Unisex Salon</h2>
-            <p class="sub">R-9 opp. Bagga Jewellers, Shakarpur, Laxmi Nagar | 8745869645</p>
+            <p class="sub">R-9 opp. Bagga Jewellers, Shakarpur, Laxmi Nagar | Contact: 8745869645</p>
+            
             <div id="pendingAlert" class="pending-alert">
-                <strong>Request Received!</strong><br>
-                Aapki slot request salon team ke paas pahunch gayi hai. Team availability check karke aapke WhatsApp par confirmation message bhejegi.
+                <strong>Request Received Successfully!</strong>
+                Thank you for choosing us. Our team is verifying stylist availability for your selected slot and will send an official confirmation via WhatsApp shortly.
             </div>
+
             <form id="bookingForm">
-                <label>Full Name</label>
-                <input type="text" id="custName" required placeholder="Apna naam daalein">
-                <label>WhatsApp Number</label>
-                <input type="tel" id="custPhone" required placeholder="10-digit WhatsApp number">
-                <label>Select Date</label>
+                <label>Your Full Name</label>
+                <input type="text" id="custName" required placeholder="Enter your full name">
+
+                <label>WhatsApp Contact Number</label>
+                <input type="tel" id="custPhone" required placeholder="Enter 10-digit WhatsApp number">
+
+                <label>Preferred Date</label>
                 <input type="date" id="bookDate" required>
-                <label>Select Preferred Time</label>
+
+                <label>Preferred Time Slot</label>
                 <select id="bookTime" required>
                     <option value="10:00 AM">10:00 AM</option>
                     <option value="11:30 AM">11:30 AM</option>
@@ -89,6 +94,7 @@ app.get('/book', (req, res) => {
                     <option value="05:30 PM">05:30 PM</option>
                     <option value="07:00 PM">07:00 PM</option>
                 </select>
+
                 <label>Preferred Stylist</label>
                 <select id="stylist">
                     <option value="Any Available">Any Available Stylist</option>
@@ -96,16 +102,18 @@ app.get('/book', (req, res) => {
                     <option value="Rahul">Rahul</option>
                     <option value="Pooja">Pooja</option>
                 </select>
-                <label>Service Needed</label>
+
+                <label>Select Treatment / Service</label>
                 <select id="service">
                     <option value="Haircut & Styling">Haircut & Styling (500)</option>
                     <option value="Hair Spa & Treatment">Hair Spa & Treatment (1200)</option>
                     <option value="Keratin Treatment">Keratin Treatment (3500)</option>
                     <option value="Facial Glow & Clean-up">Facial Glow & Clean-up (1500)</option>
                     <option value="Bridal / HD Makeup">Bridal / HD Makeup (8000)</option>
-                    <option value="Hair Coloring / Highlights">Hair Coloring (2500)</option>
+                    <option value="Hair Coloring / Highlights">Hair Coloring / Highlights (2500)</option>
                 </select>
-                <button type="submit">Submit Booking Request</button>
+
+                <button type="submit">Submit Appointment Request</button>
             </form>
         </div>
         <script>
@@ -130,7 +138,7 @@ app.get('/book', (req, res) => {
                         document.getElementById('bookingForm').style.display = 'none';
                     }
                 } catch(err) {
-                    alert('Submission failed, please try again or call 8745869645');
+                    alert('Submission failed. Please try again or reach us at 8745869645.');
                 }
             });
         </script>
