@@ -16,10 +16,9 @@ if (!fs.existsSync(billsDir)) {
     fs.mkdirSync(billsDir, { recursive: true });
 }
 
-// In-memory bookings store
+// In-memory bookings store with status: 'PENDING'
 let onlineBookings = [];
 
-// Multer Storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, billsDir),
     filename: (req, file, cb) => {
@@ -37,14 +36,13 @@ app.get('/', (req, res) => {
     res.send('Sakshi Makeover Salon POS Server is running live!');
 });
 
-// PDF Upload Endpoint
 app.post('/upload', upload.single('billPdf'), (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
     const fullUrl = `${req.protocol}://${req.get('host')}/bills/${req.file.filename}`;
     res.json({ success: true, url: fullUrl, filename: req.file.filename });
 });
 
-// Online Booking Page for Customers (Mobile Responsive HTML)
+// Online Booking Page for Customers
 app.get('/book', (req, res) => {
     res.send(`
     <!DOCTYPE html>
@@ -52,7 +50,7 @@ app.get('/book', (req, res) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Online Appointment | Sakshi Makeover & Unisex Salon</title>
+        <title>Online Appointment Request | Sakshi Makeover & Unisex Salon</title>
         <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0F111A; color: #fff; margin: 0; padding: 20px; }
             .container { max-width: 480px; margin: 0 auto; background: #181B26; border-radius: 20px; padding: 25px; border: 1px solid rgba(93, 83, 162, 0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -63,22 +61,25 @@ app.get('/book', (req, res) => {
             input:focus, select:focus { outline: none; border-color: #5D53A2; }
             button { width: 100%; padding: 14px; background: #5D53A2; border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
             button:hover { background: #4D4488; }
-            .success { display: none; background: #133326; border: 1px solid #1E8759; color: #51D88A; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-size: 14px; }
+            .pending-alert { display: none; background: #2A210D; border: 1px solid #C69500; color: #FFD24D; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
         </style>
     </head>
     <body>
         <div class="container">
             <h2>Sakshi Makeover & Unisex Salon</h2>
             <p class="sub">R-9 opp. Bagga Jewellers, Shakarpur, Laxmi Nagar | 8745869645</p>
-            <div id="successMsg" class="success">Appointment Confirmed! We look forward to seeing you.</div>
+            <div id="pendingAlert" class="pending-alert">
+                <strong>Request Received!</strong><br>
+                Aapki slot request salon team ke paas pahunch gayi hai. Team availability check karke aapke WhatsApp par confirmation message bhejegi.
+            </div>
             <form id="bookingForm">
                 <label>Full Name</label>
-                <input type="text" id="custName" required placeholder="Enter your full name">
+                <input type="text" id="custName" required placeholder="Apna naam daalein">
                 <label>WhatsApp Number</label>
-                <input type="tel" id="custPhone" required placeholder="10-digit mobile number">
+                <input type="tel" id="custPhone" required placeholder="10-digit WhatsApp number">
                 <label>Select Date</label>
                 <input type="date" id="bookDate" required>
-                <label>Select Time Slot</label>
+                <label>Select Preferred Time</label>
                 <select id="bookTime" required>
                     <option value="10:00 AM">10:00 AM</option>
                     <option value="11:30 AM">11:30 AM</option>
@@ -95,7 +96,7 @@ app.get('/book', (req, res) => {
                     <option value="Rahul">Rahul</option>
                     <option value="Pooja">Pooja</option>
                 </select>
-                <label>Desired Service</label>
+                <label>Service Needed</label>
                 <select id="service">
                     <option value="Haircut & Styling">Haircut & Styling (500)</option>
                     <option value="Hair Spa & Treatment">Hair Spa & Treatment (1200)</option>
@@ -104,7 +105,7 @@ app.get('/book', (req, res) => {
                     <option value="Bridal / HD Makeup">Bridal / HD Makeup (8000)</option>
                     <option value="Hair Coloring / Highlights">Hair Coloring (2500)</option>
                 </select>
-                <button type="submit">Book My Slot</button>
+                <button type="submit">Submit Booking Request</button>
             </form>
         </div>
         <script>
@@ -125,11 +126,11 @@ app.get('/book', (req, res) => {
                         body: JSON.stringify(payload)
                     });
                     if (res.ok) {
-                        document.getElementById('successMsg').style.display = 'block';
-                        document.getElementById('bookingForm').reset();
+                        document.getElementById('pendingAlert').style.display = 'block';
+                        document.getElementById('bookingForm').style.display = 'none';
                     }
                 } catch(err) {
-                    alert('Booking failed, please try again or call 8745869645');
+                    alert('Submission failed, please try again or call 8745869645');
                 }
             });
         </script>
@@ -138,15 +139,14 @@ app.get('/book', (req, res) => {
     `);
 });
 
-// Online Booking API
 app.post('/api/book', (req, res) => {
     const booking = req.body;
     booking.id = Date.now().toString();
+    booking.status = 'PENDING';
     onlineBookings.unshift(booking);
     res.json({ success: true, booking });
 });
 
-// App sync endpoint
 app.get('/api/bookings', (req, res) => {
     res.json(onlineBookings);
 });
