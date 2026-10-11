@@ -11,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Bills storage folder ensure karna
 const billsDir = path.join(__dirname, 'bills');
 if (!fs.existsSync(billsDir)) {
     fs.mkdirSync(billsDir, { recursive: true });
@@ -18,8 +19,14 @@ if (!fs.existsSync(billsDir)) {
 
 let onlineBookings = [];
 
+// Multer Storage Configuration
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, billsDir),
+    destination: (req, file, cb) => {
+        if (!fs.existsSync(billsDir)) {
+            fs.mkdirSync(billsDir, { recursive: true });
+        }
+        cb(null, billsDir);
+    },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname) || '.pdf';
@@ -27,21 +34,80 @@ const storage = multer.diskStorage({
         cb(null, `${base}_${uniqueSuffix}${ext}`);
     }
 });
-const upload = multer({ storage: storage });
 
-app.use('/bills', express.static(billsDir));
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
+});
 
+// Root Route
 app.get('/', (req, res) => {
     res.send('Sakshi Makeover Salon POS Server is running live!');
 });
 
+// PDF Upload Endpoint (from Flutter POS)
 app.post('/upload', upload.single('billPdf'), (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
-    const fullUrl = `${req.protocol}://${req.get('host')}/bills/${req.file.filename}`;
-    res.json({ success: true, url: fullUrl, filename: req.file.filename });
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No PDF file uploaded' });
+    }
+    const host = req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const fullUrl = `${protocol}://${host}/bills/${req.file.filename}`;
+    
+    console.log(`[Bill Uploaded]: ${req.file.filename} -> ${fullUrl}`);
+    res.json({ 
+        success: true, 
+        url: fullUrl, 
+        filename: req.file.filename 
+    });
 });
 
-// Online Booking Page for Customers (English Version)
+// Dedicated Robust PDF Serving Route
+app.get('/bills/:filename', (req, res) => {
+    const requestedFile = req.params.filename;
+    // Security sanitization (directory traversal protection)
+    const safeFilename = path.basename(requestedFile);
+    const filePath = path.join(billsDir, safeFilename);
+
+    if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+        const readStream = fs.createReadStream(filePath);
+        return readStream.pipe(res);
+    } else {
+        // Friendly HTML response if server restarted
+        return res.status(404).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Bill Not Found | Sakshi Salon</title>
+                <style>
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0F111A; color: #fff; text-align: center; padding: 50px 20px; }
+                    .card { max-width: 480px; margin: 0 auto; background: #181B26; border-radius: 20px; padding: 30px; border: 1px solid rgba(93, 83, 162, 0.4); }
+                    h2 { color: #FF7B7B; }
+                    p { color: #A4A9C0; line-height: 1.6; font-size: 14px; }
+                    .btn { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #5D53A2; color: #fff; text-decoration: none; border-radius: 10px; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h2>Invoice File Expired</h2>
+                    <p>Yeh bill receipt server restart hone ki wajah se cache se expire ho chuki hai.</p>
+                    <p>Aapke local computer (<strong>F:\\salon bills</strong>) par yeh invoice hamesha ke liye safe saved hai.</p>
+                    <p>Contact Helpline: <strong>8745869645</strong></p>
+                    <a href="https://wa.me/918745869645" class="btn">Contact Salon via WhatsApp</a>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+});
+
+// Static directory fallback
+app.use('/bills', express.static(billsDir));
+
+// Online Booking Page
 app.get('/book', (req, res) => {
     res.send(`
     <!DOCTYPE html>
@@ -147,6 +213,7 @@ app.get('/book', (req, res) => {
     `);
 });
 
+// Bookings API
 app.post('/api/book', (req, res) => {
     const booking = req.body;
     booking.id = Date.now().toString();
