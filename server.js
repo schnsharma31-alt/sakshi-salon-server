@@ -97,13 +97,13 @@ app.get('/book', (req, res) => {
       <div class="form-group">
         <label>Required Service</label>
         <select id="service" required>
-          <option value="Haircut & Styling">Haircut & Styling (₹500)</option>
-          <option value="Hair Spa & Treatment">Hair Spa & Treatment (₹1200)</option>
-          <option value="Keratin Treatment">Keratin Treatment (₹3500)</option>
-          <option value="Facial Glow & Clean-up">Facial Glow & Clean-up (₹1500)</option>
-          <option value="Bridal / HD Makeup">Bridal / HD Makeup (₹8000)</option>
-          <option value="Manicure & Pedicure">Manicure & Pedicure (₹900)</option>
-          <option value="Hair Coloring / Highlights">Hair Coloring / Highlights (₹2500)</option>
+          <option value="Haircut & Styling">Haircut & Styling (500)</option>
+          <option value="Hair Spa & Treatment">Hair Spa & Treatment (1200)</option>
+          <option value="Keratin Treatment">Keratin Treatment (3500)</option>
+          <option value="Facial Glow & Clean-up">Facial Glow & Clean-up (1500)</option>
+          <option value="Bridal / HD Makeup">Bridal / HD Makeup (8000)</option>
+          <option value="Manicure & Pedicure">Manicure & Pedicure (900)</option>
+          <option value="Hair Coloring / Highlights">Hair Coloring / Highlights (2500)</option>
         </select>
       </div>
       <div class="form-group">
