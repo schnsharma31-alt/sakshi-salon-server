@@ -16,11 +16,11 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    cb(null, file.originalname);
   }
 });
 
@@ -28,16 +28,26 @@ const upload = multer({ storage: storage });
 
 let onlineBookings = [];
 
-// Direct PDF Upload Route
+// Direct PDF Upload
 app.post('/upload', upload.single('billPdf'), (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+  if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
   const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${req.file.filename}`;
-  console.log('PDF Uploaded successfully:', fileUrl);
+  console.log('Saved file:', req.file.filename);
   res.json({ success: true, url: fileUrl });
 });
 
-// View PDF route
-app.use('/uploads', express.static(uploadsDir));
+// Explicit Route to VIEW / DOWNLOAD PDF (Taaki Cannot GET kabhi na aaye)
+app.get('/uploads/:filename', (req, res) => {
+  const filePath = path.join(uploadsDir, req.params.filename);
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="' + req.params.filename + '"');
+    return res.sendFile(filePath);
+  } else {
+    // Agar file abhi server disk par na ho toh safe fallback message
+    res.status(404).send('<h2 style="font-family:sans-serif;text-align:center;margin-top:50px;">Invoice file processing ho rahi hai, kripya 10 second baad refresh karein.</h2>');
+  }
+});
 
 app.post('/api/book', (req, res) => {
   const booking = req.body;
@@ -56,7 +66,7 @@ app.get('/ping', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Sakshi Makeover & Unisex Salon Server is Active.');
+  res.send('Sakshi Makeover Salon Server Running');
 });
 
 app.listen(PORT, () => {
