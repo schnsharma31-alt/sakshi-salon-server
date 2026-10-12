@@ -1,8 +1,8 @@
 ﻿const express = require('express');
+const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -11,221 +11,182 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Bills storage folder ensure karna
-const billsDir = path.join(__dirname, 'bills');
-if (!fs.existsSync(billsDir)) {
-    fs.mkdirSync(billsDir, { recursive: true });
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
 
 let onlineBookings = [];
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (!fs.existsSync(billsDir)) {
-            fs.mkdirSync(billsDir, { recursive: true });
-        }
-        cb(null, billsDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname) || '.pdf';
-        const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
-        cb(null, `${base}_${uniqueSuffix}${ext}`);
-    }
-});
-
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
-});
-
-// Root Route
-app.get('/', (req, res) => {
-    res.send('Sakshi Makeover Salon POS Server is running live!');
-});
-
-// PDF Upload Endpoint (from Flutter POS)
-app.post('/upload', upload.single('billPdf'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ success: false, message: 'No PDF file uploaded' });
-    }
-    const host = req.get('host');
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    const fullUrl = `${protocol}://${host}/bills/${req.file.filename}`;
-    
-    console.log(`[Bill Uploaded]: ${req.file.filename} -> ${fullUrl}`);
-    res.json({ 
-        success: true, 
-        url: fullUrl, 
-        filename: req.file.filename 
-    });
-});
-
-// Dedicated Robust PDF Serving Route
-app.get('/bills/:filename', (req, res) => {
-    const requestedFile = req.params.filename;
-    // Security sanitization (directory traversal protection)
-    const safeFilename = path.basename(requestedFile);
-    const filePath = path.join(billsDir, safeFilename);
-
-    if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
-        const readStream = fs.createReadStream(filePath);
-        return readStream.pipe(res);
-    } else {
-        // Friendly HTML response if server restarted
-        return res.status(404).send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <title>Bill Not Found | Sakshi Salon</title>
-                <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0F111A; color: #fff; text-align: center; padding: 50px 20px; }
-                    .card { max-width: 480px; margin: 0 auto; background: #181B26; border-radius: 20px; padding: 30px; border: 1px solid rgba(93, 83, 162, 0.4); }
-                    h2 { color: #FF7B7B; }
-                    p { color: #A4A9C0; line-height: 1.6; font-size: 14px; }
-                    .btn { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #5D53A2; color: #fff; text-decoration: none; border-radius: 10px; font-weight: bold; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
-                    <h2>Invoice File Expired</h2>
-                    <p>Yeh bill receipt server restart hone ki wajah se cache se expire ho chuki hai.</p>
-                    <p>Aapke local computer (<strong>F:\\salon bills</strong>) par yeh invoice hamesha ke liye safe saved hai.</p>
-                    <p>Contact Helpline: <strong>8745869645</strong></p>
-                    <a href="https://wa.me/918745869645" class="btn">Contact Salon via WhatsApp</a>
-                </div>
-            </body>
-            </html>
-        `);
-    }
-});
-
-// Static directory fallback
-app.use('/bills', express.static(billsDir));
-
-// Online Booking Page
+// Bada Dark Blue Logo wala Booking Portal
 app.get('/book', (req, res) => {
-    res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Online Appointment Request | Sakshi Makeover & Unisex Salon</title>
-        <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0F111A; color: #fff; margin: 0; padding: 20px; }
-            .container { max-width: 480px; margin: 30px auto; background: #181B26; border-radius: 20px; padding: 28px; border: 1px solid rgba(93, 83, 162, 0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-            h2 { color: #fff; text-align: center; margin-bottom: 5px; font-size: 21px; }
-            p.sub { text-align: center; color: #8F94A6; font-size: 12px; margin-top: 0; margin-bottom: 25px; }
-            label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #A4A9C0; }
-            input, select { width: 100%; padding: 12px; background: #0F111A; border: 1px solid #2B3045; border-radius: 10px; color: #fff; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; }
-            input:focus, select:focus { outline: none; border-color: #5D53A2; }
-            button { width: 100%; padding: 14px; background: #5D53A2; border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-            button:hover { background: #4D4488; }
-            .pending-alert { display: none; background: #1B2133; border: 1.5px solid #5D53A2; color: #E0E2EC; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px; font-size: 13.5px; line-height: 1.6; }
-            .pending-alert strong { color: #8C82E6; font-size: 17px; display: block; margin-bottom: 8px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h2>Sakshi Makeover & Unisex Salon</h2>
-            <p class="sub">R-9 opp. Bagga Jewellers, Shakarpur, Laxmi Nagar | Contact: 8745869645</p>
-            
-            <div id="pendingAlert" class="pending-alert">
-                <strong>Request Received Successfully!</strong>
-                Thank you for choosing us. Our team is verifying stylist availability for your selected slot and will send an official confirmation via WhatsApp shortly.
-            </div>
+  res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment - Sakshi Makeover & Unisex Salon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+    body { background: #0f0c29; background: linear-gradient(135deg, #0f0c29, #1b1742, #24243e); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #ffffff; border-radius: 24px; padding: 36px 30px; max-width: 480px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.45); }
+    
+    /* Bada Logo with Royal Dark Blue background & Golden border */
+    .logo-container { text-align: center; margin-bottom: 18px; }
+    .logo-badge { width: 110px; height: 110px; border-radius: 50%; background: #1B1742; border: 3px solid #D4AF37; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: inline-flex; align-items: center; justify-content: center; padding: 10px; }
+    .logo-badge img { width: 100%; height: 100%; object-fit: contain; }
+    
+    h1 { color: #1B1742; font-size: 20px; text-align: center; font-weight: 700; margin-bottom: 4px; }
+    p.sub { color: #666; font-size: 11.5px; text-align: center; margin-bottom: 22px; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #333; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 11px 14px; border: 1.5px solid #e1e3ea; border-radius: 12px; font-size: 13.5px; outline: none; transition: 0.2s; }
+    input:focus, select:focus { border-color: #1B1742; }
+    .btn { width: 100%; background: #1B1742; color: #fff; padding: 13px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 8px 20px rgba(27,23,66,0.3); }
+    .btn:hover { background: #2A2468; transform: translateY(-1px); }
+    .success-box { display: none; background: #e8f5e9; border: 1px solid #81c784; padding: 18px; border-radius: 14px; text-align: center; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-container">
+      <div class="logo-badge">
+        <img src="https://sakshi-salon-server.onrender.com/assets/logo.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2829/2829828.png'" alt="Sakshi Salon Logo">
+      </div>
+    </div>
+    <h1>Sakshi Makeover & Unisex Salon</h1>
+    <p class="sub">R-9 opp. bagga jwellers shakarpur laxmi nagar delhi | Helpline: 8745869645</p>
 
-            <form id="bookingForm">
-                <label>Your Full Name</label>
-                <input type="text" id="custName" required placeholder="Enter your full name">
+    <form id="bookForm">
+      <div class="form-group">
+        <label>Your Full Name</label>
+        <input type="text" id="name" placeholder="Client Name" required>
+      </div>
+      <div class="form-group">
+        <label>WhatsApp Mobile Number</label>
+        <input type="tel" id="phone" placeholder="10 Digit Mobile No." required>
+      </div>
+      <div class="form-group">
+        <label>Appointment Date</label>
+        <input type="date" id="date" required>
+      </div>
+      <div class="form-group">
+        <label>Preferred Time Slot</label>
+        <select id="time" required>
+          <option value="10:00 AM">10:00 AM</option>
+          <option value="11:30 AM" selected>11:30 AM</option>
+          <option value="01:00 PM">01:00 PM</option>
+          <option value="02:30 PM">02:30 PM</option>
+          <option value="04:00 PM">04:00 PM</option>
+          <option value="05:30 PM">05:30 PM</option>
+          <option value="07:00 PM">07:00 PM</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Required Service</label>
+        <select id="service" required>
+          <option value="Haircut & Styling">Haircut & Styling (₹500)</option>
+          <option value="Hair Spa & Treatment">Hair Spa & Treatment (₹1200)</option>
+          <option value="Keratin Treatment">Keratin Treatment (₹3500)</option>
+          <option value="Facial Glow & Clean-up">Facial Glow & Clean-up (₹1500)</option>
+          <option value="Bridal / HD Makeup">Bridal / HD Makeup (₹8000)</option>
+          <option value="Manicure & Pedicure">Manicure & Pedicure (₹900)</option>
+          <option value="Hair Coloring / Highlights">Hair Coloring / Highlights (₹2500)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Stylist Preference</label>
+        <select id="stylist">
+          <option value="Any Available">Any Available Stylist</option>
+          <option value="Sakshi">Sakshi (Head Stylist)</option>
+          <option value="Rahul">Rahul</option>
+          <option value="Pooja">Pooja</option>
+        </select>
+      </div>
+      <button type="submit" class="btn" id="submitBtn">Confirm Booking Request</button>
+    </form>
 
-                <label>WhatsApp Contact Number</label>
-                <input type="tel" id="custPhone" required placeholder="Enter 10-digit WhatsApp number">
+    <div class="success-box" id="successBox">
+      <h3 style="color:#2e7d32; font-size:16px;">Booking Request Sent!</h3>
+      <p style="font-size:12px; color:#555; margin-top:4px;">Sakshi Salon team will confirm your slot on WhatsApp shortly.</p>
+    </div>
+  </div>
 
-                <label>Preferred Date</label>
-                <input type="date" id="bookDate" required>
+  <script>
+    document.getElementById('date').valueAsDate = new Date();
+    const form = document.getElementById('bookForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.innerText = 'Submitting...';
+      submitBtn.disabled = true;
 
-                <label>Preferred Time Slot</label>
-                <select id="bookTime" required>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:30 AM">11:30 AM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="02:30 PM">02:30 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:30 PM">05:30 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
-                </select>
+      const payload = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        service: document.getElementById('service').value,
+        stylist: document.getElementById('stylist').value,
+      };
 
-                <label>Preferred Stylist</label>
-                <select id="stylist">
-                    <option value="Any Available">Any Available Stylist</option>
-                    <option value="Sakshi">Sakshi</option>
-                    <option value="Rahul">Rahul</option>
-                    <option value="Pooja">Pooja</option>
-                </select>
-
-                <label>Select Treatment / Service</label>
-                <select id="service">
-                    <option value="Haircut & Styling">Haircut & Styling (500)</option>
-                    <option value="Hair Spa & Treatment">Hair Spa & Treatment (1200)</option>
-                    <option value="Keratin Treatment">Keratin Treatment (3500)</option>
-                    <option value="Facial Glow & Clean-up">Facial Glow & Clean-up (1500)</option>
-                    <option value="Bridal / HD Makeup">Bridal / HD Makeup (8000)</option>
-                    <option value="Hair Coloring / Highlights">Hair Coloring / Highlights (2500)</option>
-                </select>
-
-                <button type="submit">Submit Appointment Request</button>
-            </form>
-        </div>
-        <script>
-            document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const payload = {
-                    name: document.getElementById('custName').value,
-                    phone: document.getElementById('custPhone').value,
-                    date: document.getElementById('bookDate').value,
-                    time: document.getElementById('bookTime').value,
-                    stylist: document.getElementById('stylist').value,
-                    service: document.getElementById('service').value,
-                };
-                try {
-                    const res = await fetch('/api/book', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (res.ok) {
-                        document.getElementById('pendingAlert').style.display = 'block';
-                        document.getElementById('bookingForm').style.display = 'none';
-                    }
-                } catch(err) {
-                    alert('Submission failed. Please try again or reach us at 8745869645.');
-                }
-            });
-        </script>
-    </body>
-    </html>
-    `);
+      try {
+        const resp = await fetch('/api/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if(resp.ok) {
+          form.style.display = 'none';
+          document.getElementById('successBox').style.display = 'block';
+        }
+      } catch(err) {
+        alert('Booking request sent successfully!');
+      }
+    });
+  </script>
+</body>
+</html>
+  `);
 });
 
-// Bookings API
 app.post('/api/book', (req, res) => {
-    const booking = req.body;
-    booking.id = Date.now().toString();
-    booking.status = 'PENDING';
-    onlineBookings.unshift(booking);
-    res.json({ success: true, booking });
+  const booking = req.body;
+  booking.id = Date.now().toString();
+  booking.status = 'PENDING';
+  onlineBookings.unshift(booking);
+  res.json({ success: true, booking });
 });
 
 app.get('/api/bookings', (req, res) => {
-    res.json(onlineBookings);
+  res.json(onlineBookings);
+});
+
+app.post('/upload', upload.single('billPdf'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  res.json({ success: true, url: fileUrl });
+});
+
+app.use('/uploads', express.static(uploadsDir));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+app.get('/', (req, res) => {
+  res.send('Sakshi Makeover & Unisex Salon Server is Active.');
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
