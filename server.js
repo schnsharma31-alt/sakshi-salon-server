@@ -1,6 +1,5 @@
 ﻿const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
@@ -8,35 +7,41 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 50mb limit taaki PDF data turant parse ho sake
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
+let onlineBookings = [];
+
+// 1. FAST JSON BASE64 UPLOAD (Guaranteed 1-second file write)
+app.post('/upload-json', (req, res) => {
+  try {
+    const { filename, base64Data } = req.body;
+    if (!filename || !base64Data) {
+      return res.status(400).json({ success: false, message: 'Missing filename or data' });
+    }
+    const cleanName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = path.join(uploadsDir, cleanName);
+    
+    // Direct write buffer to disk
+    const buffer = Buffer.from(base64Data, 'base64');
+    fs.writeFileSync(filePath, buffer);
+    console.log(`✅ Saved ${cleanName} (${buffer.length} bytes) to disk`);
+
+    const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${cleanName}`;
+    return res.json({ success: true, url: fileUrl });
+  } catch (err) {
+    console.error('Save error:', err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-const upload = multer({ storage: storage });
-
-let onlineBookings = [];
-
-// Direct PDF Upload
-app.post('/upload', upload.single('billPdf'), (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
-  const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${req.file.filename}`;
-  console.log('Saved file:', req.file.filename);
-  res.json({ success: true, url: fileUrl });
-});
-
-// Explicit Route to VIEW / DOWNLOAD PDF (Taaki Cannot GET kabhi na aaye)
+// 2. VIEW / DOWNLOAD PDF
 app.get('/uploads/:filename', (req, res) => {
   const filePath = path.join(uploadsDir, req.params.filename);
   if (fs.existsSync(filePath)) {
@@ -44,8 +49,7 @@ app.get('/uploads/:filename', (req, res) => {
     res.setHeader('Content-Disposition', 'inline; filename="' + req.params.filename + '"');
     return res.sendFile(filePath);
   } else {
-    // Agar file abhi server disk par na ho toh safe fallback message
-    res.status(404).send('<h2 style="font-family:sans-serif;text-align:center;margin-top:50px;">Invoice file processing ho rahi hai, kripya 10 second baad refresh karein.</h2>');
+    res.status(404).send('<h2 style="font-family:sans-serif;text-align:center;margin-top:50px;">Invoice file processing ho rahi hai, kripya 5 second baad refresh karein.</h2>');
   }
 });
 
