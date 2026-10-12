@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
@@ -7,51 +8,40 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-// 50mb limit taaki PDF data turant parse ho sake
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
+
 let onlineBookings = [];
 
-// 1. FAST JSON BASE64 UPLOAD (Guaranteed 1-second file write)
-app.post('/upload-json', (req, res) => {
-  try {
-    const { filename, base64Data } = req.body;
-    if (!filename || !base64Data) {
-      return res.status(400).json({ success: false, message: 'Missing filename or data' });
-    }
-    const cleanName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, '_');
-    const filePath = path.join(uploadsDir, cleanName);
-    
-    // Direct write buffer to disk
-    const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(filePath, buffer);
-    console.log(`✅ Saved ${cleanName} (${buffer.length} bytes) to disk`);
-
-    const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${cleanName}`;
-    return res.json({ success: true, url: fileUrl });
-  } catch (err) {
-    console.error('Save error:', err);
-    return res.status(500).json({ success: false, error: err.message });
-  }
+// Direct PDF Upload
+app.post('/upload', upload.single('billPdf'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
+  const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${req.file.filename}`;
+  console.log('PDF saved:', req.file.filename);
+  res.json({ success: true, url: fileUrl });
 });
 
-// 2. VIEW / DOWNLOAD PDF
-app.get('/uploads/:filename', (req, res) => {
-  const filePath = path.join(uploadsDir, req.params.filename);
-  if (fs.existsSync(filePath)) {
+// View PDF directly in browser
+app.use('/uploads', express.static(uploadsDir, {
+  setHeaders: (res, path) => {
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="' + req.params.filename + '"');
-    return res.sendFile(filePath);
-  } else {
-    res.status(404).send('<h2 style="font-family:sans-serif;text-align:center;margin-top:50px;">Invoice file processing ho rahi hai, kripya 5 second baad refresh karein.</h2>');
+    res.setHeader('Content-Disposition', 'inline');
   }
-});
+}));
 
 app.post('/api/book', (req, res) => {
   const booking = req.body;
@@ -70,7 +60,7 @@ app.get('/ping', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Sakshi Makeover Salon Server Running');
+  res.send('Sakshi Makeover Server Running');
 });
 
 app.listen(PORT, () => {
