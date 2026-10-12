@@ -16,6 +16,9 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(uploadsDir));
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -27,10 +30,6 @@ const upload = multer({ storage: storage });
 
 let onlineBookings = [];
 
-// Static uploads (PDF aur Logo dono ke liye)
-app.use('/uploads', express.static(uploadsDir));
-
-// PDF Upload
 app.post('/upload', upload.single('billPdf'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
   const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${req.file.filename}`;
@@ -51,8 +50,8 @@ app.get('/book', (req, res) => {
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f5fa; margin: 0; padding: 20px; display: flex; justify-content: center; }
     .card { background: #fff; max-width: 500px; width: 100%; border-radius: 24px; padding: 26px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
     .header { text-align: center; border-bottom: 2px solid #1B1742; padding-bottom: 16px; margin-bottom: 20px; }
-    .logo-badge { width: 110px; height: 110px; border-radius: 50%; background: #1B1742; border: 3px solid #E5B842; display: inline-flex; align-items: center; justify-content: center; padding: 4px; box-shadow: 0 6px 14px rgba(0,0,0,0.18); margin-bottom: 10px; overflow: hidden; }
-    .logo-badge img { width: 100%; height: 100%; object-fit: cover; }
+    .logo-badge { width: 105px; height: 105px; border-radius: 50%; background: #1B1742; border: 3px solid #E5B842; display: inline-flex; align-items: center; justify-content: center; padding: 4px; box-shadow: 0 6px 14px rgba(0,0,0,0.18); margin-bottom: 10px; overflow: hidden; }
+    .logo-badge img { width: 100%; height: 100%; object-fit: contain; }
     .title { color: #1B1742; font-size: 20px; font-weight: bold; margin: 4px 0 2px 0; }
     .sub { color: #666; font-size: 11.5px; margin: 2px 0; }
     label { font-size: 12.5px; font-weight: 600; color: #1B1742; display: block; margin-top: 14px; margin-bottom: 5px; }
@@ -75,11 +74,11 @@ app.get('/book', (req, res) => {
   <div class="card">
     <div class="header">
       <div class="logo-badge">
-        <img src="/uploads/logo.png" alt="Logo">
+        <img src="/public/logo.png" onerror="this.onerror=null;this.src='/uploads/logo.png';">
       </div>
       <div class="title">Sakshi Makeover & Unisex Salon</div>
       <p class="sub">R-9, opp. bagga jewellers, Shakarpur, Laxmi Nagar, Delhi</p>
-      <p class="sub" style="font-weight:600;margin-top:4px;">Contact No: 8745869645</p>
+      <p class="sub" style="font-weight:600;margin-top:4px;color:#1B1742;">Contact No: 8745869645</p>
     </div>
 
     <form id="bookingForm">
