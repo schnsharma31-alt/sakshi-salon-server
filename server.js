@@ -16,6 +16,9 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Static public folder for branding logo
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -27,15 +30,13 @@ const upload = multer({ storage: storage });
 
 let onlineBookings = [];
 
-// 1. PDF Upload API
+// PDF Upload API
 app.post('/upload', upload.single('billPdf'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
   const fileUrl = `https://sakshi-salon-server.onrender.com/uploads/${req.file.filename}`;
-  console.log('PDF saved:', req.file.filename);
   res.json({ success: true, url: fileUrl });
 });
 
-// View PDF directly in browser
 app.use('/uploads', express.static(uploadsDir, {
   setHeaders: (res, path) => {
     res.setHeader('Content-Type', 'application/pdf');
@@ -43,7 +44,7 @@ app.use('/uploads', express.static(uploadsDir, {
   }
 }));
 
-// 2. ONLINE BOOKING WEB PORTAL (Direct Mobile/Web Form)
+// ONLINE BOOKING PORTAL (With Logo, Multiple Services & Quantity Selector)
 app.get('/book', (req, res) => {
   res.send(`
 <!DOCTYPE html>
@@ -55,22 +56,34 @@ app.get('/book', (req, res) => {
   <style>
     * { box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f5fa; margin: 0; padding: 20px; display: flex; justify-content: center; }
-    .card { background: #fff; max-width: 480px; width: 100%; border-radius: 24px; padding: 28px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
-    .header { text-align: center; border-bottom: 2px solid #1B1742; padding-bottom: 18px; margin-bottom: 22px; }
-    .title { color: #1B1742; font-size: 20px; font-weight: bold; margin: 6px 0 2px 0; }
-    .sub { color: #666; font-size: 12px; margin: 0; }
-    label { font-size: 13px; font-weight: 600; color: #1B1742; display: block; margin-top: 14px; margin-bottom: 6px; }
-    input, select { width: 100%; padding: 12px 14px; border: 1.5px solid #dcdde5; border-radius: 12px; font-size: 14px; outline: none; transition: 0.2s; }
+    .card { background: #fff; max-width: 500px; width: 100%; border-radius: 24px; padding: 26px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+    .header { text-align: center; border-bottom: 2px solid #1B1742; padding-bottom: 16px; margin-bottom: 20px; }
+    .logo-badge { width: 95px; height: 95px; border-radius: 50%; background: #1B1742; border: 3px solid #E5B842; display: inline-flex; align-items: center; justify-content: center; padding: 4px; box-shadow: 0 6px 14px rgba(0,0,0,0.18); margin-bottom: 10px; }
+    .logo-badge img { width: 100%; height: 100%; object-fit: contain; }
+    .title { color: #1B1742; font-size: 20px; font-weight: bold; margin: 4px 0 2px 0; }
+    .sub { color: #666; font-size: 11.5px; margin: 2px 0; }
+    label { font-size: 12.5px; font-weight: 600; color: #1B1742; display: block; margin-top: 14px; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 11px 13px; border: 1.5px solid #dcdde5; border-radius: 12px; font-size: 13.5px; outline: none; transition: 0.2s; }
     input:focus, select:focus { border-color: #1B1742; }
-    .btn { margin-top: 24px; width: 100%; background: #1B1742; color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
-    .btn:hover { background: #2a2560; }
+    .service-add-row { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-add { background: #1B1742; color: #fff; border: none; padding: 0 16px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .cart-box { margin-top: 12px; background: #f8f8fc; border-radius: 14px; padding: 12px; border: 1px dashed #c8c9dc; }
+    .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #ebebf2; font-size: 13px; }
+    .cart-item:last-child { border-bottom: none; }
+    .qty-ctrl { display: flex; align-items: center; gap: 8px; }
+    .qty-btn { width: 26px; height: 26px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-weight: bold; }
+    .total-bar { display: flex; justify-content: space-between; font-weight: bold; margin-top: 10px; padding-top: 8px; border-top: 1.5px solid #1B1742; font-size: 14px; color: #1B1742; }
+    .btn-submit { margin-top: 22px; width: 100%; background: #1B1742; color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn-submit:hover { background: #2a2560; }
     .success-box { display: none; text-align: center; padding: 30px 10px; }
-    .success-box h3 { color: #2e7d32; margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="header">
+      <div class="logo-badge">
+        <img src="/public/logo.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2829/2829828.png'">
+      </div>
       <div class="title">Sakshi Makeover & Unisex Salon</div>
       <p class="sub">R-9, opp. bagga jewellers, Shakarpur, Laxmi Nagar, Delhi</p>
       <p class="sub" style="font-weight:600;margin-top:4px;">Helpline: 8745869645</p>
@@ -83,93 +96,190 @@ app.get('/book', (req, res) => {
       <label>WhatsApp Number *</label>
       <input type="tel" id="custPhone" required placeholder="10-digit mobile number">
 
-      <label>Appointment Date *</label>
-      <input type="date" id="custDate" required>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label>Appointment Date *</label>
+          <input type="date" id="custDate" required>
+        </div>
+        <div style="flex:1;">
+          <label>Preferred Time Slot *</label>
+          <select id="custTime" required>
+            <option value="10:00 AM">10:00 AM</option>
+            <option value="11:00 AM" selected>11:00 AM</option>
+            <option value="12:00 PM">12:00 PM</option>
+            <option value="01:00 PM">01:00 PM</option>
+            <option value="02:00 PM">02:00 PM</option>
+            <option value="03:00 PM">03:00 PM</option>
+            <option value="04:00 PM">04:00 PM</option>
+            <option value="05:00 PM">05:00 PM</option>
+            <option value="06:00 PM">06:00 PM</option>
+            <option value="07:00 PM">07:00 PM</option>
+            <option value="08:00 PM">08:00 PM</option>
+          </select>
+        </div>
+      </div>
 
-      <label>Preferred Time Slot *</label>
-      <select id="custTime" required>
-        <option value="10:00 AM">10:00 AM</option>
-        <option value="11:00 AM" selected>11:00 AM</option>
-        <option value="12:00 PM">12:00 PM</option>
-        <option value="01:00 PM">01:00 PM</option>
-        <option value="02:00 PM">02:00 PM</option>
-        <option value="03:00 PM">03:00 PM</option>
-        <option value="04:00 PM">04:00 PM</option>
-        <option value="05:00 PM">05:00 PM</option>
-        <option value="06:00 PM">06:00 PM</option>
-        <option value="07:00 PM">07:00 PM</option>
-        <option value="08:00 PM">08:00 PM</option>
-      </select>
+      <label>Select & Add Services (Multiple Allowed) *</label>
+      <div class="service-add-row">
+        <select id="serviceSelector">
+          <optgroup label="Men's Grooming">
+            <option value="Men: Beard" data-price="80">Men: Beard - 80</option>
+            <option value="Men: Clean Shave" data-price="60">Men: Clean Shave - 60</option>
+            <option value="Men: Haircut" data-price="120">Men: Haircut - 120</option>
+            <option value="Men: Head Wash" data-price="50">Men: Head Wash - 50</option>
+            <option value="Men: Treatment Hair Wash" data-price="100">Men: Treatment Hair Wash - 100</option>
+            <option value="Men: Head Massage" data-price="150">Men: Head Massage - 150</option>
+            <option value="Men: Hair Setting" data-price="50">Men: Hair Setting - 50</option>
+          </optgroup>
+          <optgroup label="Waxing & Threading">
+            <option value="Threading" data-price="30">Threading - 30</option>
+            <option value="Upperlips" data-price="20">Upperlips - 20</option>
+            <option value="Full Face (Wax)" data-price="300">Full Face (Wax) - 300</option>
+            <option value="Normal Wax: Full Arms" data-price="199">Normal Wax: Full Arms - 199</option>
+            <option value="Normal Wax: Full Legs" data-price="299">Normal Wax: Full Legs - 299</option>
+            <option value="Normal Wax: Full Body" data-price="1199">Normal Wax: Full Body - 1199</option>
+            <option value="Rica Wax: Full Arms" data-price="349">Rica Wax: Full Arms - 349</option>
+            <option value="Rica Wax: Full Legs" data-price="499">Rica Wax: Full Legs - 499</option>
+            <option value="Rica Wax: Full Body" data-price="1599">Rica Wax: Full Body - 1599</option>
+          </optgroup>
+          <optgroup label="Bleach & D-Tan">
+            <option value="Bleach: Oxy (Face & Neck)" data-price="349">Bleach: Oxy (Face & Neck) - 349</option>
+            <option value="Bleach: Full Body" data-price="1500">Bleach: Full Body - 1500</option>
+            <option value="D-Tan: Raaga (Face & Neck)" data-price="500">D-Tan: Raaga (Face & Neck) - 500</option>
+            <option value="D-Tan: O3+ (Face & Neck)" data-price="600">D-Tan: O3+ (Face & Neck) - 600</option>
+            <option value="D-Tan: Full Body" data-price="2000">D-Tan: Full Body - 2000</option>
+          </optgroup>
+          <optgroup label="Clean-up & Facials">
+            <option value="Clean-Up: Fruit" data-price="299">Clean-Up: Fruit - 299</option>
+            <option value="Clean-Up: O3+" data-price="1199">Clean-Up: O3+ - 1199</option>
+            <option value="Facial: Fruit" data-price="499">Facial: Fruit - 499</option>
+            <option value="Facial: Ozone" data-price="1199">Facial: Ozone - 1199</option>
+            <option value="Facial: O3+ Shine & Glow" data-price="1799">Facial: O3+ Shine & Glow - 1799</option>
+            <option value="Facial: Korean (13 Step)" data-price="1999">Facial: Korean (13 Step) - 1999</option>
+            <option value="Facial: Korean Hydra" data-price="2999">Facial: Korean Hydra - 2999</option>
+            <option value="Facial: Luxury Kanpeki Pro Hydra" data-price="3499">Facial: Luxury Kanpeki Pro Hydra - 3499</option>
+          </optgroup>
+          <optgroup label="Hair Care & Treatments">
+            <option value="Pedicure: Basic" data-price="500">Pedicure: Basic - 500</option>
+            <option value="Mani & Pedi: Basic" data-price="800">Mani & Pedi: Basic - 800</option>
+            <option value="Hair Spa: L'Oréal Basic" data-price="500">Hair Spa: L'Oréal Basic - 500</option>
+            <option value="Hair Spa: Streax" data-price="1200">Hair Spa: Streax - 1200</option>
+            <option value="Keratin Treatment" data-price="2000">Keratin Treatment - 2000</option>
+            <option value="Smoothening / Rebonding" data-price="2500">Smoothening / Rebonding - 2500</option>
+            <option value="Hair Botox" data-price="2500">Hair Botox - 2500</option>
+            <option value="Nanoplastia" data-price="4000">Nanoplastia - 4000</option>
+          </optgroup>
+          <optgroup label="Makeups & Pre-Bridal Packages">
+            <option value="Party Makeup: HD" data-price="3000">Party Makeup: HD - 3000</option>
+            <option value="Engagement Makeup: HD" data-price="6000">Engagement Makeup: HD - 6000</option>
+            <option value="Bridal Makeup: HD" data-price="18000">Bridal Makeup: HD - 18000</option>
+            <option value="Pre-Bridal: Classic Package" data-price="5999">Pre-Bridal: Classic Package - 5999</option>
+            <option value="Pre-Bridal: Advance Package" data-price="11999">Pre-Bridal: Advance Package - 11999</option>
+            <option value="Pre-Bridal: Luxury Package" data-price="16999">Pre-Bridal: Luxury Package - 16999</option>
+          </optgroup>
+        </select>
+        <button type="button" class="btn-add" onclick="addSelectedService()">+ Add</button>
+      </div>
 
-      <label>Select Treatment / Service *</label>
-      <select id="custService" required>
-        <optgroup label="Men's Grooming">
-          <option value="Men: Beard (₹80)">Men: Beard (₹80)</option>
-          <option value="Men: Clean Shave (₹60)">Men: Clean Shave (₹60)</option>
-          <option value="Men: Haircut (₹120)">Men: Haircut (₹120)</option>
-          <option value="Men: Head Wash (₹50)">Men: Head Wash (₹50)</option>
-          <option value="Men: Head Massage (₹150)">Men: Head Massage (₹150)</option>
-        </optgroup>
-        <optgroup label="Waxing & Threading">
-          <option value="Threading (₹30)">Threading (₹30)</option>
-          <option value="Full Face Wax (₹300)">Full Face Wax (₹300)</option>
-          <option value="Normal Wax Full Arms (₹199)">Normal Wax Full Arms (₹199)</option>
-          <option value="Normal Wax Full Legs (₹299)">Normal Wax Full Legs (₹299)</option>
-          <option value="Rica Wax Full Arms (₹349)">Rica Wax Full Arms (₹349)</option>
-          <option value="Rica Wax Full Legs (₹499)">Rica Wax Full Legs (₹499)</option>
-          <option value="Rica Wax Full Body (₹1599)">Rica Wax Full Body (₹1599)</option>
-        </optgroup>
-        <optgroup label="Clean-up & Facials">
-          <option value="Clean-Up: Fruit (₹299)">Clean-Up: Fruit (₹299)</option>
-          <option value="Clean-Up: O3+ (₹1199)">Clean-Up: O3+ (₹1199)</option>
-          <option value="Facial: Fruit (₹499)">Facial: Fruit (₹499)</option>
-          <option value="Facial: O3+ Shine & Glow (₹1799)">Facial: O3+ Shine & Glow (₹1799)</option>
-          <option value="Facial: Korean (13 Step) (₹1999)">Facial: Korean (13 Step) (₹1999)</option>
-          <option value="Facial: Korean Hydra (₹2999)">Facial: Korean Hydra (₹2999)</option>
-        </optgroup>
-        <optgroup label="Hair Care & Treatments">
-          <option value="Hair Spa: L'Oréal (₹500)">Hair Spa: L'Oréal (₹500)</option>
-          <option value="Hair Spa: Streax (₹1200)">Hair Spa: Streax (₹1200)</option>
-          <option value="Keratin Treatment (₹1800+)">Keratin Treatment (₹1800+)</option>
-          <option value="Hair Smoothening (₹1800+)">Hair Smoothening (₹1800+)</option>
-          <option value="Hair Botox (₹1800+)">Hair Botox (₹1800+)</option>
-          <option value="Nanoplastia (₹3500+)">Nanoplastia (₹3500+)</option>
-        </optgroup>
-        <optgroup label="Makeups & Packages">
-          <option value="Party Makeup (₹2000+)">Party Makeup (₹2000+)</option>
-          <option value="Engagement Makeup (₹5000+)">Engagement Makeup (₹5000+)</option>
-          <option value="Bridal Makeup (₹15000+)">Bridal Makeup (₹15000+)</option>
-          <option value="Pre-Bridal Classic Package (₹5999)">Pre-Bridal Classic Package (₹5999)</option>
-          <option value="Pre-Bridal Advance Package (₹11999)">Pre-Bridal Advance Package (₹11999)</option>
-          <option value="Pre-Bridal Luxury Package (₹16999)">Pre-Bridal Luxury Package (₹16999)</option>
-        </optgroup>
-      </select>
+      <div class="cart-box" id="cartBox">
+        <div id="cartList" style="color:#777;font-size:12px;text-align:center;">No services added yet. Select and click "+ Add".</div>
+        <div class="total-bar">
+          <span>Total Estimate:</span>
+          <span id="totalPriceDisplay">0</span>
+        </div>
+      </div>
 
-      <button type="submit" class="btn" id="submitBtn">Book Appointment</button>
+      <button type="submit" class="btn-submit" id="submitBtn">Confirm Booking Request</button>
     </form>
 
     <div class="success-box" id="successBox">
-      <h3>🎉 Booking Request Received!</h3>
-      <p style="color:#555;font-size:14px;line-height:1.5;">Thank you! Our salon team will review your appointment slot and confirm via WhatsApp shortly.</p>
-      <button class="btn" onclick="location.reload()" style="margin-top:16px;">Book Another Slot</button>
+      <h3 style="color:#2e7d32;font-size:20px;margin-bottom:6px;">🎉 Booking Request Received!</h3>
+      <p style="color:#555;font-size:13.5px;line-height:1.5;">Thank you! Our salon team has received your service details and will confirm your slot via WhatsApp shortly.</p>
+      <button class="btn-submit" onclick="location.reload()" style="margin-top:16px;">Book Another Slot</button>
     </div>
   </div>
 
   <script>
     document.getElementById('custDate').valueAsDate = new Date();
+    const cart = {};
+
+    function addSelectedService() {
+      const sel = document.getElementById('serviceSelector');
+      const name = sel.value;
+      const price = parseInt(sel.options[sel.selectedIndex].getAttribute('data-price')) || 0;
+
+      if (!cart[name]) {
+        cart[name] = { price: price, qty: 1 };
+      } else {
+        cart[name].qty += 1;
+      }
+      renderCart();
+    }
+
+    function changeQty(name, delta) {
+      if (cart[name]) {
+        cart[name].qty += delta;
+        if (cart[name].qty <= 0) delete cart[name];
+        renderCart();
+      }
+    }
+
+    function renderCart() {
+      const cartList = document.getElementById('cartList');
+      const totalDisplay = document.getElementById('totalPriceDisplay');
+      const keys = Object.keys(cart);
+
+      if (keys.length === 0) {
+        cartList.innerHTML = '<div style="color:#777;font-size:12px;text-align:center;">No services added yet. Select and click "+ Add".</div>';
+        totalDisplay.innerText = '0';
+        return;
+      }
+
+      let total = 0;
+      let html = '';
+      keys.forEach(k => {
+        const item = cart[k];
+        const sub = item.price * item.qty;
+        total += sub;
+        html += \`
+          <div class="cart-item">
+            <div>
+              <strong>\${k}</strong><br>
+              <span style="color:#666;font-size:11.5px;">\${item.price} each</span>
+            </div>
+            <div class="qty-ctrl">
+              <button type="button" class="qty-btn" onclick="changeQty('\${k}', -1)">-</button>
+              <span style="font-weight:bold;">\${item.qty}</span>
+              <button type="button" class="qty-btn" onclick="changeQty('\${k}', 1)">+</button>
+              <span style="font-weight:bold;margin-left:8px;color:#1B1742;">\${sub}</span>
+            </div>
+          </div>
+        \`;
+      });
+      cartList.innerHTML = html;
+      totalDisplay.innerText = '' + total;
+    }
 
     document.getElementById('bookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const keys = Object.keys(cart);
+      if (keys.length === 0) {
+        alert('Kripya kam se kam ek service select karke "+ Add" karein!');
+        return;
+      }
+
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.innerText = 'Submitting...';
+      btn.innerText = 'Submitting Booking...';
+
+      const summaryText = keys.map(k => \`\${k} (x\${cart[k].qty})\`).join(', ');
 
       const booking = {
         name: document.getElementById('custName').value,
         phone: document.getElementById('custPhone').value,
         date: document.getElementById('custDate').value,
         time: document.getElementById('custTime').value,
-        service: document.getElementById('custService').value,
+        service: summaryText,
         stylist: 'Any Available'
       };
 
@@ -185,12 +295,12 @@ app.get('/book', (req, res) => {
         } else {
           alert('Failed to book. Please call 8745869645 directly.');
           btn.disabled = false;
-          btn.innerText = 'Book Appointment';
+          btn.innerText = 'Confirm Booking Request';
         }
       } catch (err) {
-        alert('Server waking up or network issue. Please retry in 10 seconds.');
+        alert('Server wake up time issue. Please retry in 10 seconds.');
         btn.disabled = false;
-        btn.innerText = 'Book Appointment';
+        btn.innerText = 'Confirm Booking Request';
       }
     });
   </script>
@@ -199,13 +309,11 @@ app.get('/book', (req, res) => {
   `);
 });
 
-// 3. BOOKING API ROUTES
 app.post('/api/book', (req, res) => {
   const booking = req.body;
   booking.id = Date.now().toString();
   booking.status = 'PENDING';
   onlineBookings.unshift(booking);
-  console.log('New Booking:', booking);
   res.json({ success: true, booking });
 });
 
