@@ -14,9 +14,10 @@
     .title { color: #1B1742; font-size: 20px; font-weight: bold; margin: 4px 0 2px 0; }
     .sub { color: #666; font-size: 11.5px; margin: 2px 0; }
     label { font-size: 12.5px; font-weight: 600; color: #1B1742; display: block; margin-top: 14px; margin-bottom: 5px; }
-    input, select { width: 100%; padding: 11px 13px; border: 1.5px solid #dcdde5; border-radius: 12px; font-size: 13.5px; outline: none; }
+    input, select { width: 100%; padding: 11px 13px; border: 1.5px solid #dcdde5; border-radius: 12px; font-size: 13.5px; outline: none; transition: 0.2s; }
     input:focus, select:focus { border-color: #1B1742; }
-    .service-add-row { display: flex; gap: 8px; margin-top: 6px; }
+    .search-service-input { background: #fdfdfd; margin-bottom: 8px; border: 1.5px solid #c5c7db; }
+    .service-add-row { display: flex; gap: 8px; margin-top: 4px; }
     .btn-add { background: #1B1742; color: #fff; border: none; padding: 0 18px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .cart-box { margin-top: 12px; background: #f8f8fc; border-radius: 14px; padding: 12px; border: 1px dashed #c8c9dc; }
     .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ebebf2; font-size: 13px; }
@@ -69,10 +70,12 @@
         </div>
       </div>
 
-      <label>Select & Add Services (Multiple Allowed) *</label>
+      <label>Search & Select Services (Multiple Allowed) *</label>
+      <input type="text" id="serviceSearchInput" class="search-service-input" placeholder="🔍 Type to search service (e.g. hair, facial, wax, shave)..." oninput="filterServices()">
+      
       <div class="service-add-row">
         <select id="serviceSelector">
-          <option value="" disabled selected>Loading live services...</option>
+          <option value="" disabled selected>Loading services...</option>
         </select>
         <button type="button" class="btn-add" onclick="addSelectedService()">+ Add</button>
       </div>
@@ -94,22 +97,33 @@
   <script>
     document.getElementById('custDate').valueAsDate = new Date();
     const cart = {};
+    let allServices = [];
 
-    // DYNAMIC LIVE FETCH SERVICES FROM SERVER
     async function loadDynamicServices() {
-      const sel = document.getElementById('serviceSelector');
       try {
         const res = await fetch('/api/services');
-        const list = await res.json();
-        if (Array.isArray(list) && list.length > 0) {
-          sel.innerHTML = list.map(s => `<option value="${s}">${s}</option>`).join('');
-        } else {
-          sel.innerHTML = '<option value="Haircut">Haircut</option>';
-        }
+        allServices = await res.json();
       } catch (e) {
-        sel.innerHTML = '<option value="Hair Service">Hair Service</option><option value="Facial">Facial</option>';
+        allServices = ["Men: Haircut", "Men: Beard", "Facial: Fruit", "Threading", "Waxing", "Hair Spa", "Keratin Treatment"];
       }
+      renderServiceDropdown(allServices);
     }
+
+    function renderServiceDropdown(list) {
+      const sel = document.getElementById('serviceSelector');
+      if (list.length === 0) {
+        sel.innerHTML = '<option value="" disabled selected>No matching service found</option>';
+        return;
+      }
+      sel.innerHTML = list.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    function filterServices() {
+      const q = document.getElementById('serviceSearchInput').value.toLowerCase().trim();
+      const filtered = allServices.filter(s => s.toLowerCase().includes(q));
+      renderServiceDropdown(filtered);
+    }
+
     loadDynamicServices();
 
     function addSelectedService() {
