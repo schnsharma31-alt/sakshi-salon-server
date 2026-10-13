@@ -91,3 +91,31 @@ app.get('/ping', (req, res) => res.send('pong'));
 app.get('/', (req, res) => res.send('Sakshi Makeover Salon Server Running'));
 
 app.listen(PORT, () => console.log('Server running on port ' + PORT));
+
+// --- REALTIME CLOUD SYNC FOR LAPTOP & MOBILE ---
+let cloudCustomers = [];
+let cloudBookings = [];
+
+app.get('/api/sync/all', (req, res) => {
+  res.json({
+    customers: cloudCustomers,
+    bookings: cloudBookings
+  });
+});
+
+app.post('/api/sync/bill', (req, res) => {
+  const { bill, customer } = req.body;
+  if (bill) {
+    cloudBookings.unshift(bill);
+  }
+  if (customer) {
+    const idx = cloudCustomers.findIndex(c => c.phone === customer.phone || c.name.toLowerCase() === customer.name.toLowerCase());
+    if (idx !== -1) {
+      cloudCustomers[idx] = customer;
+    } else {
+      cloudCustomers.unshift(customer);
+    }
+  }
+  res.json({ success: true, message: 'Synced successfully' });
+});
+
