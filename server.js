@@ -5,7 +5,8 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+// static replaced
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
