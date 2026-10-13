@@ -9,9 +9,10 @@
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f5fa; margin: 0; padding: 20px; display: flex; justify-content: center; }
     .card { background: #fff; max-width: 500px; width: 100%; border-radius: 24px; padding: 26px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
     .header { text-align: center; border-bottom: 2px solid #1B1742; padding-bottom: 16px; margin-bottom: 20px; }
-    .logo-badge { width: 150px; height: 150px; border-radius: 50%; background: #1B1742; border: 4px solid #E5B842; display: inline-flex; align-items: center; justify-content: center; padding: 4px; box-shadow: 0 8px 22px rgba(0,0,0,0.28); margin-bottom: 12px; overflow: hidden; }
-    .logo-badge img { width: 125%; height: 125%; object-fit: contain; border-radius: 50%; }
-    .title { color: #1B1742; font-size: 20px; font-weight: bold; margin: 4px 0 2px 0; }
+    .title-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
+    .mini-logo { width: 44px; height: 44px; border-radius: 50%; background: #1B1742; border: 2px solid #E5B842; display: inline-flex; align-items: center; justify-content: center; padding: 2px; overflow: hidden; flex-shrink: 0; box-shadow: 0 3px 8px rgba(0,0,0,0.18); }
+    .mini-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+    .title { color: #1B1742; font-size: 19px; font-weight: bold; margin: 0; line-height: 1.2; text-align: left; }
     .sub { color: #666; font-size: 11.5px; margin: 2px 0; }
     label { font-size: 12.5px; font-weight: 600; color: #1B1742; display: block; margin-top: 14px; margin-bottom: 5px; }
     input, select { width: 100%; padding: 11px 13px; border: 1.5px solid #dcdde5; border-radius: 12px; font-size: 13.5px; outline: none; transition: 0.2s; }
@@ -24,18 +25,22 @@
     .cart-item:last-child { border-bottom: none; }
     .qty-ctrl { display: flex; align-items: center; gap: 8px; }
     .qty-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-weight: bold; font-size: 15px; }
-    .btn-submit { margin-top: 22px; width: 100%; background: #1B1742; color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .btn-submit { margin-top: 22px; width: 100%; background: #1B1742; color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-submit:hover { background: #2a2560; }
-    .success-box { display: none; text-align: center; padding: 30px 10px; }
+    .btn-wa-confirm { margin-top: 14px; width: 100%; background: #25D366; color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+    .btn-wa-confirm:hover { background: #1ebd58; }
+    .success-box { display: none; text-align: center; padding: 20px 10px; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo-badge">
-        <img src="/public/logo.png" alt="Sakshi Makeover Logo">
+      <div class="title-row">
+        <div class="mini-logo">
+          <img src="/public/logo.png" alt="Logo">
+        </div>
+        <div class="title">Sakshi Makeover & Unisex Salon</div>
       </div>
-      <div class="title">Sakshi Makeover & Unisex Salon</div>
       <p class="sub">R-9, opp. bagga jewellers, Shakarpur, Laxmi Nagar, Delhi</p>
       <p class="sub" style="font-weight:600;margin-top:4px;color:#1B1742;">Contact No: 8745869645</p>
     </div>
@@ -88,9 +93,14 @@
     </form>
 
     <div class="success-box" id="successBox">
-      <h3 style="color:#2e7d32;font-size:20px;margin-bottom:6px;">🎉 Booking Request Received!</h3>
-      <p style="color:#555;font-size:13.5px;line-height:1.5;">Thank you! Our salon team has received your service details and will confirm your slot via WhatsApp shortly.</p>
-      <button class="btn-submit" onclick="location.reload()" style="margin-top:16px;">Book Another Slot</button>
+      <h3 style="color:#2e7d32;font-size:20px;margin-bottom:6px;">🎉 Booking Request Submitted!</h3>
+      <p style="color:#444;font-size:13.5px;line-height:1.5;">Aapki booking details salon ko bhej di gayi hain. Agar WhatsApp automatically open nahi hua, to niche click karein:</p>
+      
+      <a href="#" id="directWaBtn" class="btn-wa-confirm" target="_blank">
+        <span>📲 Send Details to Salon WhatsApp (8745869645)</span>
+      </a>
+
+      <button class="btn-submit" onclick="location.reload()" style="margin-top:16px;background:#666;">Book Another Slot</button>
     </div>
   </div>
 
@@ -158,7 +168,7 @@
 
       let html = '';
       keys.forEach(k => {
-        html += '<div class="cart-item"><div><strong>' + k + '</strong></div><div class="qty-ctrl"><button type="button" class="qty-btn" onclick="changeQty(\'' + k + '\', -1)">-</button><span style="font-weight:bold;margin:0 4px;">' + cart[k] + '</span><button type="button" class="qty-btn" onclick="changeQty(\'' + k + '\', 1)">+</button></div></div>';
+        html += '<div class="cart-item"><div><strong>' + k + '</strong></div><div class="qty-ctrl"><button type="button" class="qty-btn" onclick="changeQty(\'' + k + '\', -1)">-</button><span style="font-weight:bold;margin:0 6px;">' + cart[k] + '</span><button type="button" class="qty-btn" onclick="changeQty(\'' + k + '\', 1)">+</button></div></div>';
       });
       cartList.innerHTML = html;
     }
@@ -175,36 +185,45 @@
       btn.disabled = true;
       btn.innerText = 'Submitting Booking...';
 
-      const summaryText = keys.map(k => k + ' (x' + cart[k] + ')').join(', ');
+      const summaryText = keys.map(k => k + (cart[k] > 1 ? ' (x' + cart[k] + ')' : '')).join(', ');
+
+      const custName = document.getElementById('custName').value.trim();
+      const custPhone = document.getElementById('custPhone').value.trim();
+      const custDate = document.getElementById('custDate').value;
+      const custTime = document.getElementById('custTime').value;
 
       const booking = {
-        name: document.getElementById('custName').value,
-        phone: document.getElementById('custPhone').value,
-        date: document.getElementById('custDate').value,
-        time: document.getElementById('custTime').value,
+        name: custName,
+        phone: custPhone,
+        date: custDate,
+        time: custTime,
         service: summaryText,
         stylist: 'Any Available'
       };
 
+      const salonMsg = `❖ *NEW ONLINE BOOKING RECEIVED* ❖%0A%0A` +
+        `👤 *Client Name:* ${encodeURIComponent(custName)}%0A` +
+        `📱 *Client Mobile:* ${encodeURIComponent(custPhone)}%0A` +
+        `📅 *Date:* ${encodeURIComponent(custDate)}%0A` +
+        `⏰ *Time Slot:* ${encodeURIComponent(custTime)}%0A` +
+        `✂️ *Selected Services:*%0A${encodeURIComponent(summaryText)}%0A%0A` +
+        `📍 *Sakshi Makeover & Unisex Salon*`;
+
+      const salonWaUrl = `https://wa.me/918745869645?text=${salonMsg}`;
+
       try {
-        const res = await fetch('/api/book', {
+        await fetch('/api/book', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(booking)
         });
-        if (res.ok) {
-          document.getElementById('bookingForm').style.display = 'none';
-          document.getElementById('successBox').style.display = 'block';
-        } else {
-          alert('Failed to book. Please call 8745869645 directly.');
-          btn.disabled = false;
-          btn.innerText = 'Confirm Booking Request';
-        }
-      } catch (err) {
-        alert('Server waking up or network issue. Please retry in 10 seconds.');
-        btn.disabled = false;
-        btn.innerText = 'Confirm Booking Request';
-      }
+      } catch (err) {}
+
+      document.getElementById('bookingForm').style.display = 'none';
+      document.getElementById('successBox').style.display = 'block';
+      document.getElementById('directWaBtn').href = salonWaUrl;
+
+      window.open(salonWaUrl, '_blank');
     });
   </script>
 </body>
