@@ -27,16 +27,48 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 let onlineBookings = [];
 
+const servicesFilePath = path.join(__dirname, 'services.json');
+
+function getServices() {
+  if (fs.existsSync(servicesFilePath)) {
+    try {
+      return JSON.parse(fs.readFileSync(servicesFilePath, 'utf8'));
+    } catch (_) {}
+  }
+  return ["Men: Haircut", "Men: Beard", "Facial: Fruit", "Threading"];
+}
+
+function saveServices(list) {
+  fs.writeFileSync(servicesFilePath, JSON.stringify(list, null, 2), 'utf8');
+}
+
+// SERVICES SYNC API
+app.get('/api/services', (req, res) => {
+  res.json(getServices());
+});
+
+app.post('/api/services/sync', (req, res) => {
+  const { services } = req.body;
+  if (Array.isArray(services)) {
+    saveServices(services);
+    console.log('✅ Services synced from Salon POS App. Count:', services.length);
+    return res.json({ success: true, count: services.length });
+  }
+  res.status(400).json({ success: false, message: 'Invalid services array' });
+});
+
+// PDF UPLOAD
 app.post('/upload', upload.single('billPdf'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, message: 'No file' });
   res.json({ success: true, url: 'https://sakshi-salon-server.onrender.com/uploads/' + req.file.filename });
 });
 
-// Direct send clean HTML file
+// ONLINE BOOKING PAGE
 app.get('/book', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'book.html'));
 });
 
+// BOOKINGS API
 app.post('/api/book', (req, res) => {
   const booking = req.body;
   booking.id = Date.now().toString();

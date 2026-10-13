@@ -72,61 +72,7 @@
       <label>Select & Add Services (Multiple Allowed) *</label>
       <div class="service-add-row">
         <select id="serviceSelector">
-          <optgroup label="Men's Grooming">
-            <option value="Men: Beard">Men: Beard</option>
-            <option value="Men: Clean Shave">Men: Clean Shave</option>
-            <option value="Men: Haircut">Men: Haircut</option>
-            <option value="Men: Head Wash">Men: Head Wash</option>
-            <option value="Men: Treatment Hair Wash">Men: Treatment Hair Wash</option>
-            <option value="Men: Head Massage">Men: Head Massage</option>
-            <option value="Men: Hair Setting">Men: Hair Setting</option>
-          </optgroup>
-          <optgroup label="Waxing & Threading">
-            <option value="Threading">Threading</option>
-            <option value="Upperlips">Upperlips</option>
-            <option value="Full Face (Wax)">Full Face (Wax)</option>
-            <option value="Normal Wax: Full Arms">Normal Wax: Full Arms</option>
-            <option value="Normal Wax: Full Legs">Normal Wax: Full Legs</option>
-            <option value="Normal Wax: Full Body">Normal Wax: Full Body</option>
-            <option value="Rica Wax: Full Arms">Rica Wax: Full Arms</option>
-            <option value="Rica Wax: Full Legs">Rica Wax: Full Legs</option>
-            <option value="Rica Wax: Full Body">Rica Wax: Full Body</option>
-          </optgroup>
-          <optgroup label="Bleach & D-Tan">
-            <option value="Bleach: Oxy (Face & Neck)">Bleach: Oxy (Face & Neck)</option>
-            <option value="Bleach: Full Body">Bleach: Full Body</option>
-            <option value="D-Tan: Raaga (Face & Neck)">D-Tan: Raaga (Face & Neck)</option>
-            <option value="D-Tan: O3+ (Face & Neck)">D-Tan: O3+ (Face & Neck)</option>
-            <option value="D-Tan: Full Body">D-Tan: Full Body</option>
-          </optgroup>
-          <optgroup label="Clean-up & Facials">
-            <option value="Clean-Up: Fruit">Clean-Up: Fruit</option>
-            <option value="Clean-Up: O3+">Clean-Up: O3+</option>
-            <option value="Facial: Fruit">Facial: Fruit</option>
-            <option value="Facial: Ozone">Facial: Ozone</option>
-            <option value="Facial: O3+ Shine & Glow">Facial: O3+ Shine & Glow</option>
-            <option value="Facial: Korean (13 Step)">Facial: Korean (13 Step)</option>
-            <option value="Facial: Korean Hydra">Facial: Korean Hydra</option>
-            <option value="Facial: Luxury Kanpeki Pro Hydra">Facial: Luxury Kanpeki Pro Hydra</option>
-          </optgroup>
-          <optgroup label="Hair Care & Treatments">
-            <option value="Pedicure: Basic">Pedicure: Basic</option>
-            <option value="Mani & Pedi: Basic">Mani & Pedi: Basic</option>
-            <option value="Hair Spa: L'Oréal Basic">Hair Spa: L'Oréal Basic</option>
-            <option value="Hair Spa: Streax">Hair Spa: Streax</option>
-            <option value="Keratin Treatment">Keratin Treatment</option>
-            <option value="Smoothening / Rebonding">Smoothening / Rebonding</option>
-            <option value="Hair Botox">Hair Botox</option>
-            <option value="Nanoplastia">Nanoplastia</option>
-          </optgroup>
-          <optgroup label="Makeups & Packages">
-            <option value="Party Makeup: HD">Party Makeup: HD</option>
-            <option value="Engagement Makeup: HD">Engagement Makeup: HD</option>
-            <option value="Bridal Makeup: HD">Bridal Makeup: HD</option>
-            <option value="Pre-Bridal: Classic Package">Pre-Bridal: Classic Package</option>
-            <option value="Pre-Bridal: Advance Package">Pre-Bridal: Advance Package</option>
-            <option value="Pre-Bridal: Luxury Package">Pre-Bridal: Luxury Package</option>
-          </optgroup>
+          <option value="" disabled selected>Loading live services...</option>
         </select>
         <button type="button" class="btn-add" onclick="addSelectedService()">+ Add</button>
       </div>
@@ -149,9 +95,27 @@
     document.getElementById('custDate').valueAsDate = new Date();
     const cart = {};
 
+    // DYNAMIC LIVE FETCH SERVICES FROM SERVER
+    async function loadDynamicServices() {
+      const sel = document.getElementById('serviceSelector');
+      try {
+        const res = await fetch('/api/services');
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          sel.innerHTML = list.map(s => `<option value="${s}">${s}</option>`).join('');
+        } else {
+          sel.innerHTML = '<option value="Haircut">Haircut</option>';
+        }
+      } catch (e) {
+        sel.innerHTML = '<option value="Hair Service">Hair Service</option><option value="Facial">Facial</option>';
+      }
+    }
+    loadDynamicServices();
+
     function addSelectedService() {
       const sel = document.getElementById('serviceSelector');
       const name = sel.value;
+      if (!name) return;
 
       if (!cart[name]) {
         cart[name] = 1;
