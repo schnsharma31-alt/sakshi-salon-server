@@ -88,7 +88,40 @@ app.post('/api/book', (req, res) => {
   res.json({ success: true, booking });
 });
 
-app.get('/api/bookings', (req, res) => res.json(onlineBookings));
+app.get('/api/bookings', (req, res) => {
+  const now = new Date();
+  const todayStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+  
+  // 1. Expired dates aur CANCELLED bookings ko filter karein
+  const activeBookings = (onlineBookings || []).filter(b => {
+    if (b.status === 'CANCELLED' || b.status === 'DONE') return false;
+    
+    // Purani expired dates ko alert me na bhejein
+    if (b.date) {
+      const parts = b.date.split('-');
+      if (parts.length === 3) {
+        const bDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (bDate < todayDate) return false;
+      }
+    }
+    return true;
+  });
+  
+  res.json(activeBookings);
+});
+
+// App se cancel karne par status server par bhi CANCELLED mark ho jaye
+app.post('/api/bookings/cancel', (req, res) => {
+  const { id, customerName, phone } = req.body || {};
+  onlineBookings = (onlineBookings || []).map(b => {
+    if ((id && b.id == id) || (customerName && b.name === customerName) || (phone && b.phone === phone)) {
+      return { ...b, status: 'CANCELLED' };
+    }
+    return b;
+  });
+  res.json({ success: true });
+});
 app.get('/ping', (req, res) => res.send('pong'));
 app.get('/', (req, res) => res.send('Sakshi Makeover Salon Server Running'));
 
