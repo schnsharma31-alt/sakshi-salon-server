@@ -94,7 +94,7 @@
 
     <div class="success-box" id="successBox">
       <h3 style="color:#2e7d32;font-size:20px;margin-bottom:6px;">🎉 Booking Request Submitted!</h3>
-      <p style="color:#444;font-size:13.5px;line-height:1.5;">Aapki booking details salon ko bhej di gayi hain. Agar WhatsApp automatically open nahi hua, to niche click karein:</p>
+      <p style="color:#444;font-size:13.5px;line-height:1.5;">Aapki booking details salon software par bhej di gayi hain. Agar WhatsApp automatically open nahi hua, to niche click karein:</p>
       
       <a href="#" id="directWaBtn" class="btn-wa-confirm" target="_blank">
         <span>📲 Send Details to Salon WhatsApp (8745869645)</span>
@@ -189,27 +189,31 @@
 
       const custName = document.getElementById('custName').value.trim();
       const custPhone = document.getElementById('custPhone').value.trim();
-      const custDate = document.getElementById('custDate').value;
+      const rawDate = document.getElementById('custDate').value; // YYYY-MM-DD
       const custTime = document.getElementById('custTime').value;
+
+      // Convert YYYY-MM-DD to DD-MM-YYYY for server compatibility
+      let formattedDate = rawDate;
+      if (rawDate && rawDate.includes('-')) {
+        const dParts = rawDate.split('-');
+        if (dParts.length === 3 && dParts[0].length === 4) {
+          formattedDate = `${dParts[2]}-${dParts[1]}-${dParts[0]}`;
+        }
+      }
 
       const booking = {
         name: custName,
+        fullName: custName,
         phone: custPhone,
-        date: custDate,
+        whatsappNumber: custPhone,
+        date: formattedDate,
+        appointmentDate: formattedDate,
         time: custTime,
+        timeSlot: custTime,
         service: summaryText,
-        stylist: 'Any Available'
+        services: keys,
+        stylist: 'Sakshi'
       };
-
-      const salonMsg = `❖ *NEW ONLINE BOOKING RECEIVED* ❖%0A%0A` +
-        `👤 *Client Name:* ${encodeURIComponent(custName)}%0A` +
-        `📱 *Client Mobile:* ${encodeURIComponent(custPhone)}%0A` +
-        `📅 *Date:* ${encodeURIComponent(custDate)}%0A` +
-        `⏰ *Time Slot:* ${encodeURIComponent(custTime)}%0A` +
-        `✂️ *Selected Services:*%0A${encodeURIComponent(summaryText)}%0A%0A` +
-        `📍 *Sakshi Makeover & Unisex Salon*`;
-
-      const salonWaUrl = `https://wa.me/918745869645?text=${salonMsg}`;
 
       try {
         await fetch('/api/book', {
@@ -217,7 +221,19 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(booking)
         });
-      } catch (err) {}
+      } catch (err) {
+        console.error("Booking post error:", err);
+      }
+
+      const salonMsg = `❖ *NEW ONLINE BOOKING RECEIVED* ❖%0A%0A` +
+        `👤 *Client Name:* ${encodeURIComponent(custName)}%0A` +
+        `📱 *Client Mobile:* ${encodeURIComponent(custPhone)}%0A` +
+        `📅 *Date:* ${encodeURIComponent(formattedDate)}%0A` +
+        `⏰ *Time Slot:* ${encodeURIComponent(custTime)}%0A` +
+        `✂️ *Selected Services:*%0A${encodeURIComponent(summaryText)}%0A%0A` +
+        `📍 *Sakshi Makeover & Unisex Salon*`;
+
+      const salonWaUrl = `https://wa.me/918745869645?text=${salonMsg}`;
 
       document.getElementById('bookingForm').style.display = 'none';
       document.getElementById('successBox').style.display = 'block';
