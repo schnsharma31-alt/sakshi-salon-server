@@ -22,7 +22,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 app.get('/api/version', (req, res) => {
   res.json({
-    latestVersion: "2.0.0",
+    latestVersion: "2.1.0",
     downloadUrl: "https://sakshi-salon-server.onrender.com/public/downloads/Salon_POS_Setup.exe"
   });
 });
