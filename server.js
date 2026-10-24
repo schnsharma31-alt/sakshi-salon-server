@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
@@ -20,7 +20,7 @@ if (!fs.existsSync(uploadsDir)) {
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 
-// ================ 1💩 DIGITAL VIP CARD ROUTE 💩 ===============
+// ================ 1ðŸ’© DIGITAL VIP CARD ROUTE ðŸ’© ===============
 app.get('/vip-card', (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   const name = req.query.name || 'VALUED CLIENT';
@@ -168,7 +168,7 @@ const defaultServicesList = [
   "Rica Wax: Full Arms", "Rica Wax: Full Legs", "Rica Wax: Full Body",
   "Bleach: Oxy (Face & Neck)", "Bleach: Full Body", "D-Tan: Raaga (Face & Neck)", "D-Tan: O3+ (Face & Neck)", "D-Tan: Full Body",
   "Clean-Up: Fruit", "Clean-Up: O3+", "Facial: Fruit", "Facial: Ozone", "Facial: O3+ Shine & Glow", "Facial: Korean (13 Step)", "Facial: Korean Hydra", "Facial: Luxury Kanpeki Pro Hydra",
-  "Pedicure: Basic", "Mani & Pedi: Basic", "Hair Spa: L'Or�al Basic", "Hair Spa: Streax", "Keratin Treatment", "Smoothening / Rebonding", "Hair Botox", "Nanoplastia",
+  "Pedicure: Basic", "Mani & Pedi: Basic", "Hair Spa: L'Orï¿½al Basic", "Hair Spa: Streax", "Keratin Treatment", "Smoothening / Rebonding", "Hair Botox", "Nanoplastia",
   "Party Makeup: HD", "Engagement Makeup: HD", "Bridal Makeup: HD", "Pre-Bridal: Classic Package", "Pre-Bridal: Advance Package", "Pre-Bridal: Luxury Package"
 ];
 
@@ -250,7 +250,7 @@ app.post('/api/bookings/cancel', (req, res) => {
 app.get('/ping', (req, res) => res.send('pong'));
 app.get('/', (req, res) => res.send('Sakshi Makeover Salon Server Running'));
 
-elet cloudCustomers = [];
+let cloudCustomers = [];
 let cloudBookings = [];
 
 app.get('/api/sync/all', (req, res) => {
