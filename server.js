@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
@@ -20,7 +20,7 @@ if (!fs.existsSync(uploadsDir)) {
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadsDir));
 
-// ================ 1ðŸ’© DIGITAL VIP CARD ROUTE ðŸ’© ===============
+// ================ 1💩 DIGITAL VIP CARD ROUTE 💩 ===============
 app.get('/vip-card', (req, res) => {
   const name = req.query.name || 'VALUED CLIENT';
   const tier = (req.query.tier || 'GOLD').toUpperCase();
@@ -126,9 +126,9 @@ app.get('/vip-card', (req, res) => {
 <body>
   <div class="card-wrapper">
     <div class="card">
-      <div class="watermark">ðŸ’©</div>
+      <div class="watermark">💩</div>
       <div class="header">
-        <div class="brand">âœ® SAKSHI MAKEOVER âœ®</div>
+        <div class="brand">✮ SAKSHI MAKEOVER ✮</div>
         <div class="tier-badge">${tier} VIP</div>
       </div>
       <div class="client-name">${name}</div>
@@ -141,7 +141,7 @@ app.get('/vip-card', (req, res) => {
         </div>
         <div class="detail-item">
           <div class="detail-lbl">Wallet Cash</div>
-          <div class="detail-val" style="color: #ffd700;">â‚¹ç©${wallet}</div>
+          <div class="detail-val" style="color: #ffd700;">₹�${wallet}</div>
         </div>
         <div class="detail-item">
           <div class="detail-lbl">Valid Till</devilr>
@@ -151,12 +151,12 @@ app.get('/vip-card', (req, res) => {
 
 
       <div class="perks-box">
-        âœ„ <strong>Milestone Privilege:</strong> Free Hair Spa or D-Tan on every 3rd visit milestone. Auto-applied at salon billing.
+        ✄ <strong>Milestone Privilege:</strong> Free Hair Spa or D-Tan on every 3rd visit milestone. Auto-applied at salon billing.
       </div>
 
       <div class="footer">
-        <span>ðŸ’ÎShakarpur Main Market, Delhi</span>
-        <span>ðŸ“ 8745869645</span>
+        <span>���Shakarpur Main Market, Delhi</span>
+        <span>� 8745869645</span>
       </div>
     </div>
   </div>
@@ -187,7 +187,7 @@ const defaultServicesList = [
   "Rica Wax: Full Arms", "Rica Wax: Full Legs", "Rica Wax: Full Body",
   "Bleach: Oxy (Face & Neck)", "Bleach: Full Body", "D-Tan: Raaga (Face & Neck)", "D-Tan: O3+ (Face & Neck)", "D-Tan: Full Body",
   "Clean-Up: Fruit", "Clean-Up: O3+", "Facial: Fruit", "Facial: Ozone", "Facial: O3+ Shine & Glow", "Facial: Korean (13 Step)", "Facial: Korean Hydra", "Facial: Luxury Kanpeki Pro Hydra",
-  "Pedicure: Basic", "Mani & Pedi: Basic", "Hair Spa: L'Oréal Basic", "Hair Spa: Streax", "Keratin Treatment", "Smoothening / Rebonding", "Hair Botox", "Nanoplastia",
+  "Pedicure: Basic", "Mani & Pedi: Basic", "Hair Spa: L'Or�al Basic", "Hair Spa: Streax", "Keratin Treatment", "Smoothening / Rebonding", "Hair Botox", "Nanoplastia",
   "Party Makeup: HD", "Engagement Makeup: HD", "Bridal Makeup: HD", "Pre-Bridal: Classic Package", "Pre-Bridal: Advance Package", "Pre-Bridal: Luxury Package"
 ];
 
@@ -269,7 +269,7 @@ app.post('/api/bookings/cancel', (req, res) => {
 app.get('/ping', (req, res) => res.send('pong'));
 app.get('/', (req, res) => res.send('Sakshi Makeover Salon Server Running'));
 
-let cloudCustomers = [];
+elet cloudCustomers = [];
 let cloudBookings = [];
 
 app.get('/api/sync/all', (req, res) => {
