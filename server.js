@@ -28,6 +28,7 @@ app.get('/vip-card', (req, res) => {
   const valid = req.query.valid || '1 Year';
   const discount = req.query.discount || '10';
   const wallet = req.query.wallet || '0';
+  const perks = req.query.perks || 'Exclusive VIP Salon Discounts & Priority Perks';
   
   let cardId = req.query.cardId || req.query.id || '';
   if (!cardId) {
@@ -145,7 +146,7 @@ app.get('/vip-card', (req, res) => {
 '        </div>' +
 '      </div>' +
 '      <div class="perks-box">' +
-'        <strong>Milestone Privilege:</strong> Free Hair Spa or D-Tan on every 3rd visit milestone. Auto-applied at salon billing.' +
+'        <strong>Membership Perks:</strong> ' + perks +
 '      </div>' +
 '      <div class="footer">' +
 '        <span>Shakarpur Main Market, Delhi</span>' +
