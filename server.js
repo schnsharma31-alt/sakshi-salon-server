@@ -28,6 +28,13 @@ app.get('/vip-card', (req, res) => {
   const valid = req.query.valid || '1 Year';
   const discount = req.query.discount || '10';
   const wallet = req.query.wallet || '0';
+  
+  let cardId = req.query.cardId || req.query.id || '';
+  if (!cardId) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 9000;
+    cardId = 'SM-' + (1000 + Math.abs(hash));
+  }
 
   const isPlat = tier === 'PLATINUM';
   const isGold = tier === 'GOLD';
@@ -62,7 +69,7 @@ app.get('/vip-card', (req, res) => {
 '      overflow: hidden;' +
 '      color: white;' +
 '    }' +
-'    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }' +
+'    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }' +
 '    .brand { font-size: 14px; font-weight: 800; letter-spacing: 1.5px; color: #fff; text-transform: uppercase; }' +
 '    .tier-badge {' +
 '      background: ' + badgeBg + ';' +
@@ -74,8 +81,10 @@ app.get('/vip-card', (req, res) => {
 '      border-radius: 20px;' +
 '      box-shadow: 0 4px 10px rgba(0,0,0,0.3);' +
 '    }' +
-'    .client-name { font-size: 24px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 4px; color: #fff; }' +
-'    .vip-status { font-size: 11.5px; opacity: 0.85; letter-spacing: 1px; color: ' + borderClr + '; margin-bottom: 22px; font-weight: 600; }' +
+'    .client-name { font-size: 24px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 6px; color: #fff; }' +
+'    .meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }' +
+'    .vip-status { font-size: 11.5px; opacity: 0.85; letter-spacing: 1px; color: ' + borderClr + '; font-weight: 600; }' +
+'    .card-id { font-family: monospace; font-size: 12px; font-weight: bold; background: rgba(255,255,255,0.12); padding: 3px 8px; border-radius: 6px; letter-spacing: 1.5px; color: #fff; border: 1px solid rgba(255,255,255,0.2); }' +
 '    .details-grid {' +
 '      display: grid;' +
 '      grid-template-columns: 1fr 1fr 1fr;' +
@@ -117,7 +126,10 @@ app.get('/vip-card', (req, res) => {
 '        <div class="tier-badge">' + tier + ' VIP</div>' +
 '      </div>' +
 '      <div class="client-name">' + name + '</div>' +
-'      <div class="vip-status">OFFICIAL VIP PRIVILEGE MEMBER</div>' +
+'      <div class="meta-row">' +
+'        <div class="vip-status">OFFICIAL VIP PRIVILEGE MEMBER</div>' +
+'        <div class="card-id">ID: ' + cardId + '</div>' +
+'      </div>' +
 '      <div class="details-grid">' +
 '        <div class="detail-item">' +
 '          <div class="detail-lbl">Discount</div>' +
