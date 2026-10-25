@@ -160,7 +160,7 @@ app.get('/vip-card', (req, res) => {
 
 app.get('/api/version', (req, res) => {
   res.json({
-    latestVersion: "2.5.0",
+    latestVersion: "2.6.1",
     downloadUrl: "https://sakshi-salon-server.onrender.com/public/downloads/Salon_POS_Setup.exe"
   });
 });
