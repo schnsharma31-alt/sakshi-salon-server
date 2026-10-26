@@ -1,7 +1,4 @@
 ﻿{
-    "download_url":  "https://sakshi-salon-server.onrender.com/downloads/Salon_POS_Setup.exe",
-    "mandatory":  true,
-    "build":  2,
-    "version":  "2.6.2",
-    "release_date":  "2026-10-26"
+  "version": "2.6.2",
+  "downloadUrl": "https://sakshi-salon-server.onrender.com/downloads/Salon_POS_Setup.exe"
 }
