@@ -306,40 +306,97 @@ app.get('/bill-receipt', (req, res) => {
     const mode = req.query.mode || 'Cash';
     const services = req.query.services ? req.query.services.split('|') : ['Salon Service'];
 
-    // Response headers for direct PDF download/view
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="Invoice_${inv}.pdf"`);
+    const rows = services.map(s => `
+      <tr>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 500;">${s}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 700; color: #0f172a;">Included</td>
+      </tr>
+    `).join('');
 
-    const doc = new PDFDocument({ size: [320, 600], margin: 20 });
-    doc.pipe(res);
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice - ${inv}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f1f5f9; display: flex; justify-content: center; padding: 24px 12px; }
+    .bill-card { width: 100%; max-width: 440px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+    .bill-head { background-color: #181742; padding: 32px 20px 24px; text-align: center; color: #ffffff; }
+    .salon-name { color: #f59e0b; font-size: 19px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+    .salon-sub { color: #cbd5e1; font-size: 11.5px; line-height: 1.4; margin-bottom: 4px; }
+    .salon-phone { color: #94a3b8; font-size: 12px; font-weight: 600; }
+    .bill-body { padding: 24px 20px; }
+    .meta-box { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+    .client-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+    .client-phone { font-size: 12.5px; color: #64748b; }
+    .inv-title { font-size: 14px; font-weight: 800; color: #181742; text-align: right; }
+    .inv-date { font-size: 12px; color: #64748b; text-align: right; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13.5px; }
+    th { background: #f8fafc; padding: 10px; text-align: left; font-size: 11.5px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 6px; }
+    .calc-row { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 9px; color: #334155; }
+    .grand-total { border-top: 2px dashed #cbd5e1; margin-top: 14px; padding-top: 14px; font-size: 16px; font-weight: 800; color: #181742; }
+    .print-btn { display: block; width: 100%; background: #181742; color: #ffffff; border: none; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 22px; text-align: center; text-decoration: none; transition: background 0.2s; }
+    .print-btn:hover { background: #23225c; }
+    .footer-msg { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 18px; font-style: italic; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .bill-card { box-shadow: none; border-radius: 0; max-width: 100%; }
+      .print-btn { display: none !important; }
+      .bill-head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bill-card">
+    <div class="bill-head">
+      <div class="salon-name">SAKSHI MAKEOVER &amp; UNISEX SALON</div>
+      <div class="salon-sub">R-9 Opp. Bagga Jewellers, Shakarpur Main Market, Delhi - 110092</div>
+      <div class="salon-phone">Ph: 8745869645</div>
+    </div>
+    <div class="bill-body">
+      <div class="meta-box">
+        <div>
+          <div class="client-title">Client: ${name}</div>
+          <div class="client-phone">${phone}</div>
+        </div>
+        <div>
+          <div class="inv-title">${inv}</div>
+          <div class="inv-date">${date}</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Item / Service</th>
+            <th style="text-align: right;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div class="calc-row"><span>Subtotal:</span><span>Rs. ${subtotal}</span></div>
+      <div class="calc-row"><span style="color: #16a34a;">Discount:</span><span style="color: #16a34a;">-Rs. ${discount}</span></div>
+      <div class="calc-row grand-total"><span>Net Payable:</span><span>Rs. ${net}</span></div>
+      <div class="calc-row" style="margin-top: 8px;"><span>Paid (${mode}):</span><span style="font-weight: 700;">Rs. ${paid}</span></div>
+      <div class="calc-row" style="color: ${parseInt(due) > 0 ? '#dc2626' : '#16a34a'}; font-weight: 700;">
+        <span>Balance Due:</span><span>Rs. ${due}</span>
+      </div>
+      <button class="print-btn" onclick="window.print()">Download / Save Color PDF</button>
+      <div class="footer-msg">Thank you for choosing Sakshi Makeover!</div>
+    </div>
+  </div>
+</body>
+</html>`;
 
-    // Header Header
-    doc.fontSize(14).font('Helvetica-Bold').text('SAKSHI MAKEOVER & UNISEX SALON', { align: 'center' });
-    doc.fontSize(8).font('Helvetica').text('R-9 Opp. Bagga Jewellers, Shakarpur Main Market, Delhi - 110092', { align: 'center' });
-    doc.text('Ph: 8745869645', { align: 'center' });
-    doc.moveDown(0.8);
-
-    doc.moveTo(20, doc.y).lineTo(300, doc.y).strokeColor('#cccccc').stroke();
-    doc.moveDown(0.8);
-
-    // Client & Invoice details
-    doc.fontSize(9).font('Helvetica-Bold').text(`Client: ${name}`);
-    doc.fontSize(8).font('Helvetica').text(`Phone: ${phone}`);
-    doc.text(`Invoice: ${inv}    |    Date: ${date}`);
-    doc.moveDown(0.8);
-
-    doc.moveTo(20, doc.y).lineTo(300, doc.y).strokeColor('#cccccc').stroke();
-    doc.moveDown(0.8);
-
-    // Services list
-    doc.fontSize(9).font('Helvetica-Bold').text('Services', { continued: true }).text('Status', { align: 'right' });
-    doc.moveDown(0.4);
-
-    doc.font('Helvetica').fontSize(8);
-    services.forEach(s => {
-      doc.text(s, { continued: true }).text('Included', { align: 'right' });
-      doc.moveDown(0.2);
-    });
+    res.send(html);
+  } catch (err) {
+    console.error('Receipt error:', err);
+    res.status(500).send('Error loading receipt');
+  }
+});
 
     doc.moveDown(0.6);
     doc.moveTo(20, doc.y).lineTo(300, doc.y).strokeColor('#cccccc').stroke();
