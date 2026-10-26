@@ -338,6 +338,7 @@ app.get('/bill-receipt', (req, res) => {
     .grand-total { border-top: 2px dashed #cbd5e1; margin-top: 10px; padding-top: 10px; font-size: 15px; font-weight: 800; color: #181742; }
     .print-btn { display: block; width: 100%; background: #181742; color: #ffffff; border: none; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 16px; text-align: center; }
     .footer-msg { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 14px; }
+    @page { margin: 8mm; size: auto; }
     @media print {
       body { background: #ffffff; padding: 0; }
       .bill-card { box-shadow: none; border: none; max-width: 100%; }
