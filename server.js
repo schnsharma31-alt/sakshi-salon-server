@@ -292,78 +292,116 @@ app.post('/api/sync/bill', (req, res) => {
 
 // ================= DIGITAL BILL / INVOICE ROUTE =================
 app.get('/bill-receipt', (req, res) => {
-  const inv = req.query.inv || 'INV-001';
-  const name = req.query.name || 'Valued Client';
-  const phone = req.query.phone || '';
-  const date = req.query.date || '';
-  const subtotal = req.query.sub || '0';
-  const discount = req.query.disc || '0';
-  const net = req.query.net || '0';
-  const paid = req.query.paid || '0';
-  const due = req.query.due || '0';
-  const mode = req.query.mode || 'Cash';
-  const services = req.query.services ? req.query.services.split('|') : ['Salon Service'];
+  try {
+    const inv = req.query.inv || 'INV-001';
+    const name = req.query.name || 'Valued Client';
+    const phone = req.query.phone || '';
+    const date = req.query.date || '';
+    const subtotal = req.query.sub || '0';
+    const discount = req.query.disc || '0';
+    const net = req.query.net || '0';
+    const paid = req.query.paid || '0';
+    const due = req.query.due || '0';
+    const mode = req.query.mode || 'Cash';
+    const services = req.query.services ? req.query.services.split('|') : ['Salon Service'];
 
-  const rows = services.map(s => {
-    return '<tr><td style="padding:10px;border-bottom:1px solid #eee;">' + s + '</td><td style="padding:10px;border-bottom:1px solid #eee;text-align:right;font-weight:bold;">Included</td></tr>';
-  }).join('');
+    const rows = services.map(s => `
+      <tr>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #1e293b;">${s}</td>
+        <td style="padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right; font-weight: 700; color: #0f172a;">Included</td>
+      </tr>
+    `).join('');
 
-  const html = `<!DOCTYPE html>
-<html>
+    const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice - ${inv}</title>
+  <title>Invoice_${inv}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; justify-content: center; }
-    .bill-card { background: #fff; width: 100%; max-width: 480px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #e1e4e8; }
-    .bill-head { background: #1B1742; color: #fff; padding: 25px 20px; text-align: center; }
-    .bill-title { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; color: #E5B842; margin-bottom: 5px; }
-    .bill-sub { font-size: 12px; color: #d1d5db; }
-    .bill-body { padding: 20px; }
-    .meta-box { background: #f8fafc; border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; font-size: 13px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13.5px; }
-    th { background: #f1f5f9; padding: 10px; text-align: left; font-size: 12px; color: #475569; }
-    .calc-row { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px; color: #334155; }
-    .grand-total { border-top: 2px dashed #cbd5e1; margin-top: 12px; padding-top: 12px; font-size: 16px; font-weight: 800; color: #1B1742; }
-    .paid-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-    .print-btn { display: block; width: 100%; background: #1B1742; color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 20px; text-align: center; text-decoration: none; box-sizing: border-box; }
-    @media print { .print-btn { display: none; } body { background: #fff; padding: 0; } .bill-card { box-shadow: none; border: none; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f8fafc; display: flex; justify-content: center; padding: 20px 10px; }
+    .bill-card { width: 100%; max-width: 420px; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #e2e8f0; }
+    .bill-head { background-color: #181742 !important; padding: 24px 16px; text-align: center; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .salon-name { color: #f59e0b !important; font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .salon-sub { color: #cbd5e1 !important; font-size: 11px; line-height: 1.4; }
+    .salon-phone { color: #94a3b8 !important; font-size: 11px; font-weight: 600; margin-top: 4px; }
+    .bill-body { padding: 20px 16px; }
+    .meta-box { display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 14px; }
+    .client-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .client-phone { font-size: 12px; color: #64748b; }
+    .inv-title { font-size: 13px; font-weight: 800; color: #181742; text-align: right; }
+    .inv-date { font-size: 11px; color: #64748b; text-align: right; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    th { background: #f1f5f9 !important; padding: 8px; text-align: left; font-size: 11px; color: #475569; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .calc-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #334155; }
+    .grand-total { border-top: 2px dashed #cbd5e1; margin-top: 10px; padding-top: 10px; font-size: 15px; font-weight: 800; color: #181742; }
+    .print-btn { display: block; width: 100%; background: #181742; color: #ffffff; border: none; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 16px; text-align: center; }
+    .footer-msg { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 14px; }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .bill-card { box-shadow: none; border: none; max-width: 100%; }
+      .print-btn { display: none !important; }
+      .bill-head { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
   </style>
 </head>
 <body>
   <div class="bill-card">
     <div class="bill-head">
-      <div class="bill-title">SAKSHI MAKEOVER & UNISEX SALON</div>
-      <div class="bill-sub">R-9 Opp. Bagga Jewellers, Shakarpur Main Market, Delhi - 110092<br>Ph: 8745869645</div>
+      <div class="salon-name">SAKSHI MAKEOVER &amp; UNISEX SALON</div>
+      <div class="salon-sub">R-9 Opp. Bagga Jewellers, Shakarpur Main Market, Delhi - 110092</div>
+      <div class="salon-phone">Ph: 8745869645</div>
     </div>
     <div class="bill-body">
       <div class="meta-box">
-        <div><strong>Client:</strong> ${name}<br><span style="color:#64748b;">${phone}</span></div>
-        <div style="text-align:right;"><strong>${inv}</strong><br><span style="color:#64748b;">${date}</span></div>
+        <div>
+          <div class="client-title">Client: ${name}</div>
+          <div class="client-phone">${phone}</div>
+        </div>
+        <div>
+          <div class="inv-title">${inv}</div>
+          <div class="inv-date">${date}</div>
+        </div>
       </div>
       <table>
         <thead>
-          <tr><th>Item / Service</th><th style="text-align:right;">Status</th></tr>
+          <tr>
+            <th>Item / Service</th>
+            <th style="text-align: right;">Status</th>
+          </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody>
+          ${rows}
+        </tbody>
       </table>
       <div class="calc-row"><span>Subtotal:</span><span>Rs. ${subtotal}</span></div>
-      <div class="calc-row"><span>Discount:</span><span style="color:#16a34a;">-Rs. ${discount}</span></div>
+      <div class="calc-row"><span style="color: #16a34a;">Discount:</span><span style="color: #16a34a;">-Rs. ${discount}</span></div>
       <div class="calc-row grand-total"><span>Net Payable:</span><span>Rs. ${net}</span></div>
-      <div class="calc-row" style="margin-top:8px;"><span>Paid (${mode}):</span><span style="font-weight:bold;">Rs. ${paid}</span></div>
-      <div class="calc-row" style="color:${parseInt(due) > 0 ? '#dc2626' : '#16a34a'};font-weight:bold;">
+      <div class="calc-row" style="margin-top: 6px;"><span>Paid (${mode}):</span><span style="font-weight: 700;">Rs. ${paid}</span></div>
+      <div class="calc-row" style="color: ${parseInt(due) > 0 ? '#dc2626' : '#16a34a'}; font-weight: 700;">
         <span>Balance Due:</span><span>Rs. ${due}</span>
       </div>
-      <button class="print-btn" onclick="window.print()">?? Print / Save as PDF</button>
-      <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;">
-        Thank you for choosing Sakshi Makeover!
-      </div>
+      <button class="print-btn" onclick="window.print()">Download / Save Color PDF</button>
+      <div class="footer-msg">Thank you for choosing Sakshi Makeover!</div>
     </div>
   </div>
+  <script>
+    // Page load hote hi direct print/PDF save dialog trigger karega
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    });
+  </script>
 </body>
 </html>`;
-  res.send(html);
+
+    res.send(html);
+  } catch (err) {
+    console.error('Receipt error:', err);
+    res.status(500).send('Error loading receipt');
+  }
 });
 
 app.listen(PORT, () => console.log('Server running on port ' + PORT));
