@@ -357,7 +357,7 @@ app.get('/bill-receipt', (req, res) => {
       </div>
       <button class="print-btn" onclick="window.print()">?? Print / Save as PDF</button>
       <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;">
-        Thank you for choosing Sakshi Makeover! ?
+        Thank you for choosing Sakshi Makeover!
       </div>
     </div>
   </div>
