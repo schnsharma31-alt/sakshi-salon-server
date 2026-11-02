@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDirint, { recursive: true });
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
