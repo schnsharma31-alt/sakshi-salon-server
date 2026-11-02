@@ -62,6 +62,18 @@ app.get('/vip-card', (req, res) => {
   res.send(`<!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:40px;"><h2>VIP Card - ${name}</h2><p>Tier: ${tier}</p></body></html>`);
 });
 
+
+// UPDATER ROUTES (Direct match for updater_service.dart)
+app.get('/version.json', (req, res) => {
+  const vPath = path.join(__dirname, 'public', 'version.json');
+  if (fs.existsSync(vPath)) {
+    return res.sendFile(vPath);
+  }
+  return res.status(404).json({ error: 'version.json not found' });
+});
+
+app.use('/downloads', express.static(path.join(__dirname, 'public')));
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
