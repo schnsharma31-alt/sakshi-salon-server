@@ -1,7 +1,7 @@
 ﻿{
-    "releaseNotes":  "Royal Pure PDF Billing engine, Render direct cloud sync, compact WhatsApp receipts with Instagram branding, and VIP customer retention engine.",
-    "buildNumber":  2,
+    "releaseNotes":  "Royal Pure PDF Billing, WhatsApp short links, Instagram branding \u0026 VIP retention.",
+    "buildNumber":  5,
     "mandatory":  true,
-    "version":  "1.0.1",
+    "version":  "1.0.2",
     "downloadUrl":  "https://sakshi-salon-server.onrender.com/public/update_windows.zip"
 }
