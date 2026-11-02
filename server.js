@@ -16,7 +16,19 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(uploadsDir));
+
+// Explicit Pure PDF Serving Route
+app.get('/uploads/:filename', (req, res) => {
+  const safeName = path.basename(req.params.filename);
+  const filePath = path.join(uploadsDir, safeName);
+
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send(`Cannot GET /uploads/${safeName}`);
+});
 
 // Guaranteed Base64 PDF Upload Route
 app.post('/api/upload-pdf', (req, res) => {
