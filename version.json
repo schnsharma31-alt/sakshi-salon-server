@@ -1,7 +1,7 @@
 ﻿{
-  "version": "2.6.0",
-  "latestVersion": "2.6.0",
-  "minVersion": "2.0.0",
-  "downloadUrl": "https://sakshi-salon-server.onrender.com/downloads/Salon_POS_Setup.exe",
-  "releaseNotes": "Staff Monthly Salary & Commission Slip Generator, Staff Advance Ledger & Direct WhatsApp E-Slip PDF."
+    "releaseNotes":  "Royal Pure PDF Billing engine, Render direct cloud sync, compact WhatsApp receipts with Instagram branding \u0026 VIP retention.",
+    "buildNumber":  2,
+    "mandatory":  true,
+    "version":  "2.6.3",
+    "downloadUrl":  "https://sakshi-salon-server.onrender.com/downloads/Salon_POS_Setup.exe"
 }
