@@ -1,7 +1,7 @@
 ﻿{
-    "releaseNotes":  "Added service \u0026 package name editing, item-level POS discounts, and customizable inventory low stock threshold.",
-    "buildNumber":  7,
+    "releaseNotes":  "Added service \u0026 package name editing, item-level POS discounts, custom low-stock threshold alert, and full user accounts \u0026 password management.",
+    "buildNumber":  8,
     "mandatory":  true,
-    "version":  "2.6.4",
+    "version":  "2.6.5",
     "downloadUrl":  "https://sakshi-salon-server.onrender.com/downloads/update_windows.zip"
 }
